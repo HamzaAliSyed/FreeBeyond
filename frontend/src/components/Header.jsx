@@ -1,7 +1,24 @@
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+
 function Header() {
+    const [isSignedIn, setIsSignedIn] = useState(false)
+    const [username, setUsername] = useState("")
+    const [profilePicture, setProfilePicture] = useState('')
     const accountCreateNavigate = useNavigate()
     const signInNavigate = useNavigate()
+    const gotoHome = useNavigate()
+
+    useEffect( 
+        () => {
+            const storedUsername = localStorage.getItem("Username")
+            if (storedUsername) {
+                setUsername(storedUsername)
+                setIsSignedIn(true)
+            }
+        }, []
+    )
+
     const handleCreateAccountClick = async () => {
         try {
             const response = await fetch('http://localhost:2712/api/accounts/createrequest', {
@@ -38,44 +55,47 @@ function Header() {
         }
     }
 
+    const handleSignOutClick = () => {
+        localStorage.removeItem('token')
+        localStorage.removeItem('Username')
+        setIsSignedIn(false)
+        setUsername("")
+        gotoHome("/")
+    }
+
     return (
-        <nav className="bg-black">
-            <ul className='flex justify-end py-3 px-6 border-b'>
-                <li><a 
-                className="bg-[#BC0F0F]
-                        my-3
-                        mx-2
-                        box-border 
-                        text-white 
-                        cursor-pointer 
-                        block 
-                        font-roboto 
-                        text-base 
-                        font-bold 
-                        outline-none 
-                        p-[9px_20px] 
-                        no-underline 
-                        tap-highlight-transparent"
-                        onClick={handleCreateAccountClick}
-                >Create Account</a></li>
-                <li><a className="
-                bg-[#BC0F0F]
-                        my-3
-                        mx-2
-                        box-border 
-                        text-white 
-                        cursor-pointer 
-                        block 
-                        font-roboto 
-                        text-base 
-                        font-bold 
-                        outline-none 
-                        p-[9px_20px] 
-                        no-underline 
-                        tap-highlight-transparent
-                " onClick={handleSignInClick}
-                >Sign In</a></li>
-            </ul>
+        <nav className='flex w-full h-20 justify-between items-center'>
+            <div className="p-4">logo</div>
+            <div className='p-4'>search</div>
+            <div className="p-4">
+                <ul>
+                    {isSignedIn ? (
+                        <>
+                            <li>
+                            <span>Welcome, {username}</span>
+                            </li>
+                            <li>
+                                <a href="#" onClick={handleSignOutClick}>
+                                    Sign Out
+                                </a>
+                            </li>
+                        </>
+                    ) : (
+                        <>
+                            <li>
+                                <a href='#' onClick={handleSignInClick}>
+                                    Sign In
+                                </a>
+                            </li>
+                            <li>
+                                <a href='#' onClick={handleCreateAccountClick}>
+                                    Create Account
+                                </a>
+                            </li>
+                        </>
+                    )}
+                </ul>
+            </div>
         </nav>
     )
 }

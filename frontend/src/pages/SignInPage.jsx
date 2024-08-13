@@ -1,6 +1,8 @@
 import Archer from "../assets/ranger.jpg"
 import { useNavigate } from "react-router-dom"
 import { useState } from "react"
+import { jwtDecode } from "jwt-decode";
+
 
 
 function SignInPage() {
@@ -29,8 +31,10 @@ const handleSubmit = async (e) => {
         if (response.ok) {
             const data = await response.json()
             const token = data.token
-
+            const decodedToken = jwtDecode(token)
+            const USERNAME = decodedToken.sub
             localStorage.setItem("token", token)
+            localStorage.setItem("Username",USERNAME)
             alert("Signed In")
             navigate("/");
         } else {
