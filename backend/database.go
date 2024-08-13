@@ -12,6 +12,7 @@ import (
 
 var mongoClient *mongo.Client
 var users *mongo.Collection
+var Characters *mongo.Collection
 
 func ConnectToMongo() {
 	mongoClientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -31,5 +32,6 @@ func ConnectToMongo() {
 	fmt.Println("Connected to MongoDB!")
 
 	users = mongoClient.Database("dndusers").Collection("users")
+	Characters = mongoClient.Database("dndusers").Collection("Characters")
 
 }

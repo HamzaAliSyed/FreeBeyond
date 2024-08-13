@@ -1,12 +1,14 @@
 package main
 
 import (
+	"backend/models"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func HandleCharacterCreation(response http.ResponseWriter, request *http.Request) {
@@ -30,8 +32,9 @@ func HandleCharacterCreation(response http.ResponseWriter, request *http.Request
 		}
 
 		var Player struct {
-			FirstName string `bson:"first_name"`
-			LastName  string `bson:"last_name"`
+			ID        primitive.ObjectID `bson:"_id"`
+			FirstName string             `bson:"first_name"`
+			LastName  string             `bson:"last_name"`
 		}
 
 		PlayerFullNameRetrivalError := users.FindOne(context.TODO(), bson.M{"username": data.Username}).Decode(&Player)
@@ -45,5 +48,28 @@ func HandleCharacterCreation(response http.ResponseWriter, request *http.Request
 
 		PlayerName := fmt.Sprintf("%s %s", Player.FirstName, Player.LastName)
 		fmt.Println(PlayerName)
+
+		NewCharacter := models.Character{
+			ID:               primitive.NewObjectID(),
+			UserID:           Player.ID,
+			PlayerName:       PlayerName,
+			ProficiencyBonus: 2,
+		}
+
+		CharacterCreated, CreationError := Characters.InsertOne(context.TODO(), NewCharacter)
+
+		if CreationError != nil {
+			http.Error(response, "Error creating character", http.StatusInternalServerError)
+			return
+		}
+
+		newCharacterID := CharacterCreated.InsertedID.(primitive.ObjectID)
+
+		response.WriteHeader(http.StatusCreated)
+		response.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(response).Encode(map[string]string{
+			"character_id": newCharacterID.Hex(),
+		})
+
 	}
 }
