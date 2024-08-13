@@ -7,11 +7,20 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type Credentials struct {
+	Username string `json:"Username"`
+	Password string `json:"Password"`
+}
+
+var jwtKey = []byte("AllAlphasAreFailingRetards")
 
 func HandleCreateAccountRequest(response http.ResponseWriter, request *http.Request) {
 	fmt.Println("Received a request:", request.Method, request.URL.Path)
@@ -23,6 +32,21 @@ func HandleCreateAccountRequest(response http.ResponseWriter, request *http.Requ
 		response.Header().Add("request", "createAccount")
 		response.WriteHeader(200)
 		response.Write([]byte("Create Account recieved"))
+	} else {
+		response.Write([]byte("Method should be POST only"))
+	}
+}
+
+func HandleSignAccountRequest(response http.ResponseWriter, request *http.Request) {
+	fmt.Println("Received a request:", request.Method, request.URL.Path)
+	response.Header().Set("Access-Control-Allow-Origin", "*")
+	response.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	response.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if request.Method == "POST" {
+		response.Header().Add("request", "signin")
+		response.WriteHeader(200)
+		response.Write([]byte("Sign in request recieved"))
 	} else {
 		response.Write([]byte("Method should be POST only"))
 	}
@@ -74,6 +98,58 @@ func HandleCreateAccountUserFormRequest(response http.ResponseWriter, request *h
 
 }
 
+func HandleSignInFormRequest(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Access-Control-Allow-Origin", "*")
+	response.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	response.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if request.Method == "OPTIONS" {
+		response.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if request.Method != "POST" {
+		http.Error(response, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var sessioncredentials Credentials
+
+	sessionerror := json.NewDecoder(request.Body).Decode(&sessioncredentials)
+
+	if sessionerror != nil {
+		http.Error(response, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	var user models.User
+
+	findError := users.FindOne(context.TODO(), bson.M{"username": sessioncredentials.Username}).Decode(&user)
+	if findError != nil {
+		http.Error(response, "User not found", http.StatusUnauthorized)
+		return
+	}
+
+	passwordcompareerror := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(sessioncredentials.Password))
+
+	if passwordcompareerror != nil {
+		http.Error(response, "Invalid password", http.StatusUnauthorized)
+		return
+	}
+
+	token, tokenerror := GenerateJWT(user.Username)
+	if tokenerror != nil {
+		http.Error(response, "Error generating token", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]string{
+		"token": token,
+	})
+}
+
 func HandleUserNameMatchRequest(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Access-Control-Allow-Origin", "*")
 	response.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -120,4 +196,22 @@ func CheckIfUsernameIsInDatabase(username string) bool {
 	}
 
 	return true
+}
+
+func GenerateJWT(Username string) (string, error) {
+	expirationTime := time.Now().Add(time.Hour * 255)
+
+	claims := &jwt.StandardClaims{
+		Subject:   Username,
+		ExpiresAt: expirationTime.Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

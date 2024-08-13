@@ -25,5 +25,7 @@ func main() {
 	backend.HandleFunc("/api/accounts/createrequest", HandleCreateAccountRequest)
 	backend.HandleFunc("/api/accounts/createaccount", HandleCreateAccountUserFormRequest)
 	backend.HandleFunc("/api/accounts/usernamematchrequest", HandleUserNameMatchRequest)
+	backend.HandleFunc("/api/accounts/signinrequest", HandleSignAccountRequest)
+	backend.HandleFunc("/api/accounts/signin", HandleSignInFormRequest)
 	log.Fatal(http.ListenAndServe(":"+port, backend))
 }
