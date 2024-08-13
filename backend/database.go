@@ -31,7 +31,7 @@ func ConnectToMongo() {
 
 	fmt.Println("Connected to MongoDB!")
 
-	users = mongoClient.Database("dndusers").Collection("users")
-	Characters = mongoClient.Database("dndusers").Collection("Characters")
+	users = mongoClient.Database("dnd").Collection("users")
+	Characters = mongoClient.Database("dnd").Collection("characters")
 
 }
