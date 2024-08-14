@@ -178,21 +178,23 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 
 	character.MainAttributes = mainAttributes
 
-	modifiers := map[string]int{
-		"StrengthModifier":     AttributeModifierCalculator(CharacterAbilityScore.Strength),
-		"DexterityModifier":    AttributeModifierCalculator(CharacterAbilityScore.Dexterity),
-		"ConstitutionModifier": AttributeModifierCalculator(CharacterAbilityScore.Constitution),
-		"IntelligenceModifier": AttributeModifierCalculator(CharacterAbilityScore.Intelligence),
-		"WisdomModifier":       AttributeModifierCalculator(CharacterAbilityScore.Wisdom),
-		"CharismaModifier":     AttributeModifierCalculator(CharacterAbilityScore.Charisma),
+	character.Modifiers = models.Modifiers{
+		StrengthModifier:     ModifierCalculator(CharacterAbilityScore.Strength),
+		DexterityModifier:    ModifierCalculator(CharacterAbilityScore.Dexterity),
+		ConstitutionModifier: ModifierCalculator(CharacterAbilityScore.Constitution),
+		IntelligenceModifier: ModifierCalculator(CharacterAbilityScore.Intelligence),
+		WisdomModifier:       ModifierCalculator(CharacterAbilityScore.Wisdom),
+		CharismaModifier:     ModifierCalculator(CharacterAbilityScore.Charisma),
 	}
 
-	filter := bson.M{"_id": character.ID}
+	InitialSavingThrowsGenerator(character)
 
+	filter := bson.M{"_id": character.ID}
 	update := bson.M{
 		"$set": bson.M{
 			"mainattributes": character.MainAttributes,
-			"modifiers":      modifiers,
+			"modifiers":      character.Modifiers,
+			"savingthrow":    character.SavingThrow,
 		},
 	}
 
@@ -207,5 +209,4 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(map[string]string{
 		"status": "Character attributes updated successfully",
 	})
-
 }

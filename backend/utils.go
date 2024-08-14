@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -52,7 +53,36 @@ func RetrieveCharacter(characterid string) (*models.Character, error) {
 
 }
 
-func AttributeModifierCalculator(statvalue int) int {
+func ModifierCalculator(statvalue int) int {
 	statmodifier := (statvalue - 10) / 2
 	return statmodifier
+}
+
+func InitialSavingThrowsGenerator(character *models.Character) {
+	fmt.Println("Generating Initial Saving Throws")
+	modifiers := character.Modifiers
+
+	var savingThrows []models.SavingThrow
+
+	valueOfModifier := reflect.ValueOf(modifiers)
+	typeOfModifiers := valueOfModifier.Type()
+
+	for i := 0; i < valueOfModifier.NumField(); i++ {
+		fieldValue := valueOfModifier.Field(i)
+		fieldName := typeOfModifiers.Field(i).Name
+		attributeName := fieldName[:len(fieldName)-8]
+
+		savingThrow := models.SavingThrow{
+			ID:                    primitive.NewObjectID(),
+			Attribute:             attributeName,
+			AttributeModifier:     int(fieldValue.Int()),
+			SavingThrowValue:      int(fieldValue.Int()),
+			NumberOfProficiencies: 0,
+		}
+
+		savingThrows = append(savingThrows, savingThrow)
+	}
+
+	character.SavingThrow = savingThrows
+
 }

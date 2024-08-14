@@ -17,5 +17,6 @@ type Character struct {
 	BurrowingSpeed   int                `bson:"burrowingspeed"`
 	ExhaustionLevel  int                `bson:"exhaustionlevel"`
 	MainAttributes   MainAttributes     `bson:"mainattributes"`
+	Modifiers        Modifiers          `bson:"modifiers"`
 	SavingThrow      []SavingThrow      `bson:"savingthrow"`
 }
