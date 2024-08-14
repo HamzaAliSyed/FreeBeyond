@@ -3,7 +3,6 @@ package main
 import (
 	"backend/models"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -31,22 +30,11 @@ func OnlyPost(response http.ResponseWriter, request *http.Request) error {
 	return nil
 }
 
-func RetrieveCharacter(response http.ResponseWriter, request *http.Request) (*models.Character, error) {
-	var idstruct struct {
-		CharacterID string `json:"characterid"`
-	}
+func RetrieveCharacter(characterid string) (*models.Character, error) {
 
-	parseerror := json.NewDecoder(request.Body).Decode(&idstruct)
-
-	if parseerror != nil {
-		http.Error(response, "Unable to parse character", http.StatusBadRequest)
-		return nil, fmt.Errorf("parse error")
-	}
-
-	objectID, objectIDError := primitive.ObjectIDFromHex(idstruct.CharacterID)
+	objectID, objectIDError := primitive.ObjectIDFromHex(characterid)
 
 	if objectIDError != nil {
-		http.Error(response, "Unable to extract id", http.StatusBadRequest)
 		return nil, fmt.Errorf("invalid ID format")
 	}
 

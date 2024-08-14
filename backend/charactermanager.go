@@ -12,6 +12,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type AbilityScoreModifiers struct {
+	StrengthModifier     int
+	DexterityModifier    int
+	ConstitutionModifier int
+	IntelligenceModifier int
+	WisdomModifier       int
+	CharismaModifier     int
+}
+
 func HandleCharacterCreation(response http.ResponseWriter, request *http.Request) {
 
 	AllowCorsHeaderAndPreflight(response, request)
@@ -126,7 +135,27 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 	if MethodError := OnlyPost(response, request); MethodError != nil {
 		return
 	}
-	character, characterretrieveerror := RetrieveCharacter(response, request)
+
+	var CharacterAbilityScore struct {
+		CharacterID  string `json:"characterid"`
+		Strength     int    `json:"strength"`
+		Dexterity    int    `json:"dexterity"`
+		Constitution int    `json:"constitution"`
+		Intelligence int    `json:"intelligence"`
+		Wisdom       int    `json:"wisdom"`
+		Charisma     int    `json:"charisma"`
+	}
+
+	CharacterAbilityScoreRetrieveError := json.NewDecoder(request.Body).Decode(&CharacterAbilityScore)
+
+	if CharacterAbilityScoreRetrieveError != nil {
+		http.Error(response, "Unable to parse request", http.StatusBadRequest)
+		return
+	}
+
+	targetid := CharacterAbilityScore.CharacterID
+
+	character, characterretrieveerror := RetrieveCharacter(targetid)
 
 	if characterretrieveerror != nil {
 		http.Error(response, "Unable to retrieve character", http.StatusBadRequest)
@@ -137,4 +166,46 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 		http.Error(response, "Character not found", http.StatusNotFound)
 		return
 	}
+
+	mainAttributes := models.MainAttributes{
+		StrengthScore:     CharacterAbilityScore.Strength,
+		DexterityScore:    CharacterAbilityScore.Dexterity,
+		ConstitutionScore: CharacterAbilityScore.Constitution,
+		IntelligenceScore: CharacterAbilityScore.Intelligence,
+		WisdomScore:       CharacterAbilityScore.Wisdom,
+		CharismaScore:     CharacterAbilityScore.Charisma,
+	}
+
+	character.MainAttributes = mainAttributes
+
+	modifiers := map[string]int{
+		"StrengthModifier":     AttributeModifierCalculator(CharacterAbilityScore.Strength),
+		"DexterityModifier":    AttributeModifierCalculator(CharacterAbilityScore.Dexterity),
+		"ConstitutionModifier": AttributeModifierCalculator(CharacterAbilityScore.Constitution),
+		"IntelligenceModifier": AttributeModifierCalculator(CharacterAbilityScore.Intelligence),
+		"WisdomModifier":       AttributeModifierCalculator(CharacterAbilityScore.Wisdom),
+		"CharismaModifier":     AttributeModifierCalculator(CharacterAbilityScore.Charisma),
+	}
+
+	filter := bson.M{"_id": character.ID}
+
+	update := bson.M{
+		"$set": bson.M{
+			"mainattributes": character.MainAttributes,
+			"modifiers":      modifiers,
+		},
+	}
+
+	_, updateErr := Characters.UpdateOne(context.TODO(), filter, update)
+	if updateErr != nil {
+		http.Error(response, "Failed to update character", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]string{
+		"status": "Character attributes updated successfully",
+	})
+
 }
