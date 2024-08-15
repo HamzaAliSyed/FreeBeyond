@@ -9,11 +9,9 @@ import (
 func genericOk(reponse http.ResponseWriter, request *http.Request) {
 	fmt.Println("Received a request:", request.Method, request.URL.Path)
 
-	// Serve files from the current directory if needed
 	fileServer := http.FileServer(http.Dir("."))
 	fileServer.ServeHTTP(reponse, request)
 
-	// Respond with status OK
 	reponse.WriteHeader(http.StatusOK)
 }
 
@@ -30,5 +28,6 @@ func main() {
 	backend.HandleFunc("/api/accounts/createacharacter", HandleCharacterCreation)
 	backend.HandleFunc("/api/accounts/character/addcharactername", AddCharacterName)
 	backend.HandleFunc("/api/accounts/character/addattributes", AddAttributes)
+	backend.HandleFunc("/api/charactergeneration/skills/", HandleSkillsFactory)
 	log.Fatal(http.ListenAndServe(":"+port, backend))
 }

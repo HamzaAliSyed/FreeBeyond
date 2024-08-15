@@ -210,3 +210,36 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 		"status": "Character attributes updated successfully",
 	})
 }
+
+func HandleSkillsFactory(response http.ResponseWriter, request *http.Request) {
+	fmt.Println("Skill Factory called")
+	AllowCorsHeaderAndPreflight(response, request)
+	OnlyPost(response, request)
+
+	var SkillInstance struct {
+		Name                string `json:"name"`
+		AssociatedAttribute string `json:"associatedattribute"`
+	}
+
+	SkillRetrieveError := json.NewDecoder(request.Body).Decode(&SkillInstance)
+
+	if SkillRetrieveError != nil {
+		http.Error(response, "Invalid Attribute", http.StatusBadRequest)
+		return
+	}
+	SkillDocument := bson.D{
+		{Key: "name", Value: SkillInstance.Name},
+		{Key: "associatedattribute", Value: SkillInstance.AssociatedAttribute},
+	}
+
+	_, insertErr := skills.InsertOne(context.TODO(), SkillDocument)
+
+	if insertErr != nil {
+		http.Error(response, "Failed to insert skill", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusCreated)
+	response.Write([]byte("Skill inserted successfully"))
+
+}
