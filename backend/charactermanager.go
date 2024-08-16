@@ -2,6 +2,7 @@ package main
 
 import (
 	"backend/models"
+	"backend/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -23,7 +24,7 @@ type AbilityScoreModifiers struct {
 
 func HandleCharacterCreation(response http.ResponseWriter, request *http.Request) {
 
-	AllowCorsHeaderAndPreflight(response, request)
+	utils.AllowCorsHeaderAndPreflight(response, request)
 
 	if request.Method != http.MethodPost {
 		http.Error(response, "Invalid request method", http.StatusMethodNotAllowed)
@@ -85,7 +86,7 @@ func HandleCharacterCreation(response http.ResponseWriter, request *http.Request
 }
 
 func AddCharacterName(response http.ResponseWriter, request *http.Request) {
-	AllowCorsHeaderAndPreflight(response, request)
+	utils.AllowCorsHeaderAndPreflight(response, request)
 	if request.Method != http.MethodPost {
 		http.Error(response, "Only Post methods are allowed", http.StatusMethodNotAllowed)
 		return
@@ -131,8 +132,8 @@ func AddCharacterName(response http.ResponseWriter, request *http.Request) {
 }
 
 func AddAttributes(response http.ResponseWriter, request *http.Request) {
-	AllowCorsHeaderAndPreflight(response, request)
-	if MethodError := OnlyPost(response, request); MethodError != nil {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if MethodError := utils.OnlyPost(response, request); MethodError != nil {
 		return
 	}
 
@@ -155,7 +156,7 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 
 	targetid := CharacterAbilityScore.CharacterID
 
-	character, characterretrieveerror := RetrieveCharacter(targetid)
+	character, characterretrieveerror := utils.RetrieveCharacter(targetid, Characters)
 
 	if characterretrieveerror != nil {
 		http.Error(response, "Unable to retrieve character", http.StatusBadRequest)
@@ -179,16 +180,16 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 	character.MainAttributes = mainAttributes
 
 	character.Modifiers = models.Modifiers{
-		StrengthModifier:     ModifierCalculator(CharacterAbilityScore.Strength),
-		DexterityModifier:    ModifierCalculator(CharacterAbilityScore.Dexterity),
-		ConstitutionModifier: ModifierCalculator(CharacterAbilityScore.Constitution),
-		IntelligenceModifier: ModifierCalculator(CharacterAbilityScore.Intelligence),
-		WisdomModifier:       ModifierCalculator(CharacterAbilityScore.Wisdom),
-		CharismaModifier:     ModifierCalculator(CharacterAbilityScore.Charisma),
+		StrengthModifier:     utils.ModifierCalculator(CharacterAbilityScore.Strength),
+		DexterityModifier:    utils.ModifierCalculator(CharacterAbilityScore.Dexterity),
+		ConstitutionModifier: utils.ModifierCalculator(CharacterAbilityScore.Constitution),
+		IntelligenceModifier: utils.ModifierCalculator(CharacterAbilityScore.Intelligence),
+		WisdomModifier:       utils.ModifierCalculator(CharacterAbilityScore.Wisdom),
+		CharismaModifier:     utils.ModifierCalculator(CharacterAbilityScore.Charisma),
 	}
 
-	InitialSavingThrowsGenerator(character)
-	InitializeSkillsArray(character)
+	utils.InitialSavingThrowsGenerator(character)
+	utils.InitializeSkillsArray(character, skills)
 
 	filter := bson.M{"_id": character.ID}
 	update := bson.M{
@@ -215,8 +216,8 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 
 func HandleSkillsFactory(response http.ResponseWriter, request *http.Request) {
 	fmt.Println("Skill Factory called")
-	AllowCorsHeaderAndPreflight(response, request)
-	if methoderror := OnlyPost(response, request); methoderror != nil {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if methoderror := utils.OnlyPost(response, request); methoderror != nil {
 		return
 	}
 
@@ -249,8 +250,8 @@ func HandleSkillsFactory(response http.ResponseWriter, request *http.Request) {
 }
 
 func HandleAddCharacterMotives(response http.ResponseWriter, request *http.Request) {
-	AllowCorsHeaderAndPreflight(response, request)
-	if methoderror := OnlyPost(response, request); methoderror != nil {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if methoderror := utils.OnlyPost(response, request); methoderror != nil {
 		return
 	}
 
@@ -267,7 +268,7 @@ func HandleAddCharacterMotives(response http.ResponseWriter, request *http.Reque
 		http.Error(response, "Bad request in JSON", http.StatusBadRequest)
 	}
 
-	character, characterRetireError := RetrieveCharacter(CharacterMotiveInstance.CharacterID)
+	character, characterRetireError := utils.RetrieveCharacter(CharacterMotiveInstance.CharacterID, Characters)
 
 	if characterRetireError != nil {
 		http.Error(response, "Cannot find the character", http.StatusBadRequest)

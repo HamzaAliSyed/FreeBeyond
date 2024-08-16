@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"backend/models"
@@ -9,6 +9,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func AllowCorsHeaderAndPreflight(response http.ResponseWriter, request *http.Request) {
@@ -31,7 +32,7 @@ func OnlyPost(response http.ResponseWriter, request *http.Request) error {
 	return nil
 }
 
-func RetrieveCharacter(characterid string) (*models.Character, error) {
+func RetrieveCharacter(characterid string, db *mongo.Collection) (*models.Character, error) {
 
 	objectID, objectIDError := primitive.ObjectIDFromHex(characterid)
 
@@ -43,7 +44,7 @@ func RetrieveCharacter(characterid string) (*models.Character, error) {
 
 	var character models.Character
 
-	charactererror := Characters.FindOne(context.TODO(), filter).Decode(&character)
+	charactererror := db.FindOne(context.TODO(), filter).Decode(&character)
 
 	if charactererror != nil {
 		return nil, fmt.Errorf("character not found")
@@ -87,7 +88,7 @@ func InitialSavingThrowsGenerator(character *models.Character) {
 
 }
 
-func InitializeSkillsArray(character *models.Character) {
+func InitializeSkillsArray(character *models.Character, skills *mongo.Collection) {
 	fmt.Println("Generating basic skill array for the character")
 	filter := bson.M{}
 
