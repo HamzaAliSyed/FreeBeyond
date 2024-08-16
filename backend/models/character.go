@@ -19,4 +19,5 @@ type Character struct {
 	MainAttributes   MainAttributes     `bson:"mainattributes"`
 	Modifiers        Modifiers          `bson:"modifiers"`
 	SavingThrow      []SavingThrow      `bson:"savingthrow"`
+	Skills           Skills             `bson:"skills"`
 }

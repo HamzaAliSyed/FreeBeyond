@@ -86,3 +86,46 @@ func InitialSavingThrowsGenerator(character *models.Character) {
 	character.SavingThrow = savingThrows
 
 }
+
+func InitializeSkillsArray(character *models.Character) {
+	fmt.Println("Generating basic skill array for the character")
+	filter := bson.M{}
+
+	skillcursor, skillretrieveerror := skills.Find(context.TODO(), filter)
+
+	if skillretrieveerror != nil {
+		fmt.Println(fmt.Errorf("error in retrieving skills: %s", skillretrieveerror))
+		return
+	}
+
+	var SkillList models.Skills
+
+	for skillcursor.Next(context.TODO()) {
+		var skill models.Skill
+		if err := skillcursor.Decode(&skill); err != nil {
+			fmt.Println("Error decoding skill:", err)
+			continue
+		}
+
+		switch skill.AssociatedAttribute {
+		case "Strength":
+			skill.AssociatedAttributeValue = character.Modifiers.StrengthModifier
+		case "Dexterity":
+			skill.AssociatedAttributeValue = character.Modifiers.DexterityModifier
+		case "Constitution":
+			skill.AssociatedAttributeValue = character.Modifiers.ConstitutionModifier
+		case "Intelligence":
+			skill.AssociatedAttributeValue = character.Modifiers.IntelligenceModifier
+		case "Wisdom":
+			skill.AssociatedAttributeValue = character.Modifiers.WisdomModifier
+		case "Charisma":
+			skill.AssociatedAttributeValue = character.Modifiers.CharismaModifier
+		}
+
+		skill.FinalSkillValue = skill.AssociatedAttributeValue + int(skill.NumberOfProficiencies*float64(skill.ProficiencyBonus)) + skill.AdditionalBoostValue
+
+		SkillList.SkillList = append(SkillList.SkillList, skill)
+	}
+
+	character.Skills = SkillList
+}

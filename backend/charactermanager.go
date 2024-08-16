@@ -188,6 +188,7 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 	}
 
 	InitialSavingThrowsGenerator(character)
+	InitializeSkillsArray(character)
 
 	filter := bson.M{"_id": character.ID}
 	update := bson.M{
@@ -195,6 +196,7 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 			"mainattributes": character.MainAttributes,
 			"modifiers":      character.Modifiers,
 			"savingthrow":    character.SavingThrow,
+			"skills":         character.Skills,
 		},
 	}
 
