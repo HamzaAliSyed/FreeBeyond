@@ -216,7 +216,9 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 func HandleSkillsFactory(response http.ResponseWriter, request *http.Request) {
 	fmt.Println("Skill Factory called")
 	AllowCorsHeaderAndPreflight(response, request)
-	OnlyPost(response, request)
+	if methoderror := OnlyPost(response, request); methoderror != nil {
+		return
+	}
 
 	var SkillInstance struct {
 		Name                string `json:"name"`
@@ -243,5 +245,59 @@ func HandleSkillsFactory(response http.ResponseWriter, request *http.Request) {
 
 	response.WriteHeader(http.StatusCreated)
 	response.Write([]byte("Skill inserted successfully"))
+
+}
+
+func HandleAddCharacterMotives(response http.ResponseWriter, request *http.Request) {
+	AllowCorsHeaderAndPreflight(response, request)
+	if methoderror := OnlyPost(response, request); methoderror != nil {
+		return
+	}
+
+	var CharacterMotiveInstance struct {
+		CharacterID       string `json:"characterid"`
+		PersonalityTraits string `json:"personalitytraits"`
+		Ideals            string `json:"ideals"`
+		Bonds             string `json:"bonds"`
+		Flaws             string `json:"flaws"`
+	}
+
+	CharacterMotiveExtractError := json.NewDecoder(request.Body).Decode(&CharacterMotiveInstance)
+	if CharacterMotiveExtractError != nil {
+		http.Error(response, "Bad request in JSON", http.StatusBadRequest)
+	}
+
+	character, characterRetireError := RetrieveCharacter(CharacterMotiveInstance.CharacterID)
+
+	if characterRetireError != nil {
+		http.Error(response, "Cannot find the character", http.StatusBadRequest)
+		return
+	}
+
+	character.CharacterMotives = models.CharacterMotives{
+		PersonalityTraits: CharacterMotiveInstance.PersonalityTraits,
+		Bonds:             CharacterMotiveInstance.Bonds,
+		Ideals:            CharacterMotiveInstance.Ideals,
+		Flaws:             CharacterMotiveInstance.Flaws,
+	}
+
+	filter := bson.M{"_id": character.ID}
+	update := bson.M{
+		"$set": bson.M{
+			"charactermotives": character.CharacterMotives,
+		},
+	}
+
+	_, updateErr := Characters.UpdateOne(context.TODO(), filter, update)
+	if updateErr != nil {
+		http.Error(response, "Failed to update character", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]string{
+		"status": "Character motives updated successfully",
+	})
 
 }

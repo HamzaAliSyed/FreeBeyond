@@ -29,5 +29,6 @@ func main() {
 	backend.HandleFunc("/api/accounts/character/addcharactername", AddCharacterName)
 	backend.HandleFunc("/api/accounts/character/addattributes", AddAttributes)
 	backend.HandleFunc("/api/charactergeneration/skills/", HandleSkillsFactory)
+	backend.HandleFunc("/api/charactergeneration/addcharactermotives", HandleAddCharacterMotives)
 	log.Fatal(http.ListenAndServe(":"+port, backend))
 }
