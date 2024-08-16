@@ -6,5 +6,5 @@ type Source struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty"`
 	Name          string             `bson:"name"`
 	Type          string             `bson:"type"`
-	PublishedDate primitive.DateTime `bson:"publisheddate"`
+	PublishedDate string             `bson:"publisheddate"`
 }
