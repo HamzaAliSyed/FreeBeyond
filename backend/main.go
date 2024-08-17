@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/joho/godotenv"
 )
 
 func genericOk(reponse http.ResponseWriter, request *http.Request) {
@@ -18,10 +20,15 @@ func genericOk(reponse http.ResponseWriter, request *http.Request) {
 }
 
 func main() {
+	environmenterror := godotenv.Load()
+	if environmenterror != nil {
+		log.Fatalf("Error loading .env file")
+	}
 	database.ConnectToMongo()
 	const port = "2712"
 	backend := http.NewServeMux()
 	routes.FeatRoutes(backend)
+	routes.AccountRoutes(backend)
 
 	backend.HandleFunc("/", genericOk)
 	log.Fatal(http.ListenAndServe(":"+port, backend))

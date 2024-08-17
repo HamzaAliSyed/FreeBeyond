@@ -41,7 +41,9 @@ function Header() {
 
     const handleSignInClick = async () => {
         try {
-            const response =await fetch('http://localhost:2712/api/accounts/signinrequest', {})
+            const response =await fetch('http://localhost:2712/api/accounts/signinrequest', {
+                method: 'POST',
+            })
 
             if (response.ok) {
                 signInNavigate("/sign-in")
