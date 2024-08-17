@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"context"
@@ -11,9 +11,11 @@ import (
 )
 
 var mongoClient *mongo.Client
-var users *mongo.Collection
+var Users *mongo.Collection
 var Characters *mongo.Collection
-var skills *mongo.Collection
+var Skills *mongo.Collection
+var Feats *mongo.Collection
+var Source *mongo.Collection
 
 func ConnectToMongo() {
 	mongoClientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -32,8 +34,10 @@ func ConnectToMongo() {
 
 	fmt.Println("Connected to MongoDB!")
 
-	users = mongoClient.Database("dnd").Collection("users")
+	Users = mongoClient.Database("dnd").Collection("users")
 	Characters = mongoClient.Database("dnd").Collection("characters")
-	skills = mongoClient.Database("dnd").Collection("skills")
+	Skills = mongoClient.Database("dnd").Collection("skills")
+	Feats = mongoClient.Database("dnd").Collection("feats")
+	Source = mongoClient.Database("dnd").Collection("source")
 
 }
