@@ -21,4 +21,5 @@ type Character struct {
 	SavingThrow      []SavingThrow      `bson:"savingthrow"`
 	Skills           Skills             `bson:"skills"`
 	CharacterMotives CharacterMotives   `bson:"charactermotives"`
+	Feats            []Feats            `bson:"feats"`
 }

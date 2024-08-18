@@ -14,12 +14,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const NONLEGENDARYCHARACTERMAX = 20
+const LEGENDARYCHARACTERMAX = 26
+
+var InstanceModifiers models.Modifiers
+var InstanceSavingThrow []models.SavingThrow
+var InstanceSkill models.Skills
+
 func CharacterManagerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/accounts/createacharacter", HandleCharacterCreation)
 	mux.HandleFunc("/api/accounts/character/addcharactername", AddCharacterName)
 	mux.HandleFunc("/api/accounts/character/addattributes", AddAttributes)
 	mux.HandleFunc("/api/charactergeneration/skills/", HandleSkillsFactory)
 	mux.HandleFunc("/api/charactergeneration/addcharactermotives", HandleAddCharacterMotives)
+	mux.HandleFunc("/api/charactermodify/addfeats", HandleAddFeatsToCharacter)
 }
 
 type AbilityScoreModifiers struct {
@@ -301,4 +309,154 @@ func HandleAddCharacterMotives(response http.ResponseWriter, request *http.Reque
 		"status": "Character motives updated successfully",
 	})
 
+}
+
+func HandleAddFeatsToCharacter(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	methoderror := utils.OnlyPost(response, request)
+	if methoderror != nil {
+		return
+	}
+	var CharacterFeatInstance struct {
+		FeatsID     primitive.ObjectID `json:"featsid"`
+		CharacterID primitive.ObjectID `json:"characterid"`
+	}
+
+	jsonparseerror := json.NewDecoder(request.Body).Decode(&CharacterFeatInstance)
+	if jsonparseerror != nil {
+		http.Error(response, "Cannot parse json error", http.StatusBadRequest)
+		return
+	}
+
+	characteridstring := CharacterFeatInstance.CharacterID.Hex()
+	featsidstring := CharacterFeatInstance.FeatsID.Hex()
+
+	character, characterretrieveerror := utils.RetrieveCharacter(characteridstring, database.Characters)
+	if characterretrieveerror != nil {
+		http.Error(response, "Invalid Character ID", http.StatusInternalServerError)
+		return
+	}
+
+	feats, featserrorretrieve := utils.RetrieveFeats(featsidstring, database.Feats)
+	if featserrorretrieve != nil {
+		http.Error(response, "Invalid Feat ID", http.StatusInternalServerError)
+		return
+	}
+
+	switch feats.Prerequisite {
+	case "None":
+		{
+			charactermodificationarray := feats.CharacterModifications
+			for _, modification := range charactermodificationarray {
+				if modification.Category == "Ability Score" {
+					switch modification.Attribute {
+					case "Strength":
+						{
+							if character.MainAttributes.StrengthScore >= NONLEGENDARYCHARACTERMAX {
+								http.Error(response, "Character already on max strength", http.StatusForbidden)
+								return
+							} else {
+								character.MainAttributes.StrengthScore += modification.Value
+								character.Modifiers.StrengthModifier = utils.ModifierCalculator(character.MainAttributes.StrengthScore)
+								InstanceSavingThrow = utils.InitialSavingThrowsGenerator(character)
+								InstanceSkill = utils.InitializeSkillsArray(character, database.Skills)
+							}
+						}
+					case "Dexterity":
+						{
+							if character.MainAttributes.DexterityScore >= NONLEGENDARYCHARACTERMAX {
+								http.Error(response, "Character already on max dexterity", http.StatusForbidden)
+								return
+							} else {
+								character.MainAttributes.DexterityScore += modification.Value
+								character.Modifiers.DexterityModifier = utils.ModifierCalculator(character.MainAttributes.DexterityScore)
+								InstanceSavingThrow = utils.InitialSavingThrowsGenerator(character)
+								InstanceSkill = utils.InitializeSkillsArray(character, database.Skills)
+							}
+						}
+					case "Constitution":
+						{
+							if character.MainAttributes.ConstitutionScore >= NONLEGENDARYCHARACTERMAX {
+								http.Error(response, "Character already on max constitution", http.StatusForbidden)
+								return
+							} else {
+								character.MainAttributes.ConstitutionScore += modification.Value
+								character.Modifiers.ConstitutionModifier = utils.ModifierCalculator(character.MainAttributes.ConstitutionScore)
+								InstanceSavingThrow = utils.InitialSavingThrowsGenerator(character)
+								InstanceSkill = utils.InitializeSkillsArray(character, database.Skills)
+							}
+						}
+					case "Intelligence":
+						{
+							if character.MainAttributes.IntelligenceScore >= NONLEGENDARYCHARACTERMAX {
+								http.Error(response, "Character already on max intelligence", http.StatusForbidden)
+								return
+							} else {
+								character.MainAttributes.IntelligenceScore += modification.Value
+								character.Modifiers.IntelligenceModifier = utils.ModifierCalculator(character.MainAttributes.IntelligenceScore)
+								InstanceSavingThrow = utils.InitialSavingThrowsGenerator(character)
+								InstanceSkill = utils.InitializeSkillsArray(character, database.Skills)
+							}
+						}
+					case "Wisdom":
+						{
+							if character.MainAttributes.WisdomScore >= NONLEGENDARYCHARACTERMAX {
+								http.Error(response, "Character already on max wisdom", http.StatusForbidden)
+								return
+							} else {
+								character.MainAttributes.WisdomScore += modification.Value
+								character.Modifiers.WisdomModifier = utils.ModifierCalculator(character.MainAttributes.WisdomScore)
+								InstanceSavingThrow = utils.InitialSavingThrowsGenerator(character)
+								InstanceSkill = utils.InitializeSkillsArray(character, database.Skills)
+							}
+						}
+					case "Charisma":
+						{
+							if character.MainAttributes.CharismaScore >= NONLEGENDARYCHARACTERMAX {
+								http.Error(response, "Character already on max charisma", http.StatusForbidden)
+								return
+							} else {
+								character.MainAttributes.CharismaScore += modification.Value
+								character.Modifiers.CharismaModifier = utils.ModifierCalculator(character.MainAttributes.CharismaScore)
+								InstanceSavingThrow = utils.InitialSavingThrowsGenerator(character)
+								InstanceSkill = utils.InitializeSkillsArray(character, database.Skills)
+							}
+						}
+					}
+				} else if modification.Category == "Saving Throws" {
+
+				} else if modification.Category == "Skills" {
+
+				}
+			}
+
+			character.SavingThrow = InstanceSavingThrow
+			character.Skills = InstanceSkill
+			character.Feats = append(character.Feats, *feats)
+
+			updateCharacter := bson.M{
+				"$set": character,
+			}
+
+			_, updateerror := database.Characters.UpdateOne(
+				context.TODO(),
+				bson.M{"_id": character.ID},
+				updateCharacter,
+			)
+
+			if updateerror != nil {
+				fmt.Printf("Error updating character: %v\n", updateerror)
+				http.Error(response, "Failed to add feat to character", http.StatusInternalServerError)
+				return
+			}
+
+			response.WriteHeader(http.StatusOK)
+			response.Write([]byte("Feat was added to the character"))
+		}
+	default:
+		{
+			http.Error(response, "Feat cannot be added because it does not meet prerequisites", http.StatusUnauthorized)
+			return
+		}
+	}
 }

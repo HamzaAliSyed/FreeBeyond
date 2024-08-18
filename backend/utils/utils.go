@@ -59,12 +59,32 @@ func RetrieveCharacter(characterid string, db *mongo.Collection) (*models.Charac
 
 }
 
+func RetrieveFeats(featsid string, db *mongo.Collection) (*models.Feats, error) {
+	objectID, objectIDError := primitive.ObjectIDFromHex(featsid)
+
+	if objectIDError != nil {
+		return nil, fmt.Errorf("invalid ID format")
+	}
+
+	filter := bson.M{"_id": objectID}
+
+	var feat models.Feats
+
+	featerror := db.FindOne(context.TODO(), filter).Decode(&feat)
+
+	if featerror != nil {
+		return nil, fmt.Errorf("feat not found")
+	}
+
+	return &feat, nil
+}
+
 func ModifierCalculator(statvalue int) int {
 	statmodifier := (statvalue - 10) / 2
 	return statmodifier
 }
 
-func InitialSavingThrowsGenerator(character *models.Character) {
+func InitialSavingThrowsGenerator(character *models.Character) []models.SavingThrow {
 	fmt.Println("Generating Initial Saving Throws")
 	modifiers := character.Modifiers
 
@@ -91,9 +111,11 @@ func InitialSavingThrowsGenerator(character *models.Character) {
 
 	character.SavingThrow = savingThrows
 
+	return savingThrows
+
 }
 
-func InitializeSkillsArray(character *models.Character, skills *mongo.Collection) {
+func InitializeSkillsArray(character *models.Character, skills *mongo.Collection) models.Skills {
 	fmt.Println("Generating basic skill array for the character")
 	filter := bson.M{}
 
@@ -101,7 +123,7 @@ func InitializeSkillsArray(character *models.Character, skills *mongo.Collection
 
 	if skillretrieveerror != nil {
 		fmt.Println(fmt.Errorf("error in retrieving skills: %s", skillretrieveerror))
-		return
+		return models.Skills{}
 	}
 
 	var SkillList models.Skills
@@ -134,6 +156,7 @@ func InitializeSkillsArray(character *models.Character, skills *mongo.Collection
 	}
 
 	character.Skills = SkillList
+	return SkillList
 }
 
 func GenerateJWT(Username string) (string, error) {

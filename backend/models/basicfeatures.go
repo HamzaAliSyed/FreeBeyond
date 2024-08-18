@@ -10,6 +10,7 @@ type FlavourText struct {
 
 type CharacterStatsAndAbilitiesModifier struct {
 	Parent    string
+	Category  string
 	Attribute string
 	Value     int
 }
