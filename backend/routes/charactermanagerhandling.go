@@ -197,8 +197,12 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 		CharismaModifier:     utils.ModifierCalculator(CharacterAbilityScore.Charisma),
 	}
 
+	var characterid = character.ID.Hex()
+
 	utils.InitialSavingThrowsGenerator(character)
 	utils.InitializeSkillsArray(character, database.Skills)
+	maxcarryweight := utils.MaxCarryWeightCalculator(characterid)
+	carryweight := utils.CarryWeightCalculator(characterid)
 
 	filter := bson.M{"_id": character.ID}
 	update := bson.M{
@@ -207,6 +211,8 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 			"modifiers":      character.Modifiers,
 			"savingthrow":    character.SavingThrow,
 			"skills":         character.Skills,
+			"maxcarryweight": maxcarryweight,
+			"carryweight":    carryweight,
 		},
 	}
 
@@ -424,7 +430,36 @@ func HandleAddFeatsToCharacter(response http.ResponseWriter, request *http.Reque
 						}
 					}
 				} else if modification.Category == "Saving Throws" {
-
+					InstanceSavingThrow = character.SavingThrow
+					for i := range InstanceSavingThrow {
+						switch InstanceSavingThrow[i].Attribute {
+						case "Strength":
+							{
+								InstanceSavingThrow[i].SavingThrowValue += modification.Value
+							}
+						case "Dexterity":
+							{
+								InstanceSavingThrow[i].SavingThrowValue += modification.Value
+							}
+						case "Constitution":
+							{
+								InstanceSavingThrow[i].SavingThrowValue += modification.Value
+							}
+						case "Intelligence":
+							{
+								InstanceSavingThrow[i].SavingThrowValue += modification.Value
+							}
+						case "Wisdom":
+							{
+								InstanceSavingThrow[i].SavingThrowValue += modification.Value
+							}
+						case "Charisma":
+							{
+								InstanceSavingThrow[i].SavingThrowValue += modification.Value
+							}
+						}
+					}
+					character.SavingThrow = InstanceSavingThrow
 				} else if modification.Category == "Skills" {
 
 				}

@@ -162,9 +162,9 @@ func InitializeSkillsArray(character *models.Character, skills *mongo.Collection
 func GenerateJWT(Username string) (string, error) {
 	expirationTime := time.Now().Add(time.Hour * 255)
 
-	claims := &jwt.StandardClaims{
+	claims := &jwt.RegisteredClaims{
 		Subject:   Username,
-		ExpiresAt: expirationTime.Unix(),
+		ExpiresAt: jwt.NewNumericDate(expirationTime),
 	}
 
 	jwtKey := []byte(os.Getenv("JWTKEY"))
@@ -186,11 +186,43 @@ func CheckIfUsernameIsInDatabase(username string) bool {
 	err := database.Users.FindOne(context.TODO(), filter).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return false // Username does not exist
+			return false
 		}
 		log.Printf("Error checking username in database: %v", err)
 		return false
 	}
 
 	return true
+}
+
+func MaxCarryWeightCalculator(characterid string) int {
+	character, characterretrieveerror := RetrieveCharacter(characterid, database.Characters)
+	if characterretrieveerror != nil {
+		message := fmt.Errorf("error in retrieving character %v", characterretrieveerror)
+		fmt.Println(message)
+		return 0
+	}
+
+	var maxcarryweight int = character.MainAttributes.StrengthScore * 15
+	fmt.Println(maxcarryweight)
+	return maxcarryweight
+}
+
+func CarryWeightCalculator(characterid string) int {
+	character, characterretrieveerror := RetrieveCharacter(characterid, database.Characters)
+	if characterretrieveerror != nil {
+		message := fmt.Errorf("error in retrieving character %v", characterretrieveerror)
+		fmt.Println(message)
+		return 0
+	}
+	var weight int
+	weight = 0
+	for _, item := range character.Inventory {
+		weight += item.Weight
+	}
+	if weight >= character.MaxCarryWeight {
+		character.StatusAfflicted = "Encumbered"
+	}
+	fmt.Println(weight)
+	return weight
 }

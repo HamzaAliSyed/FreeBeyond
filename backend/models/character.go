@@ -15,6 +15,7 @@ type Character struct {
 	SwimmingSpeed    int                `bson:"swimmingspeed"`
 	ClimbingSpeed    int                `bson:"climbingspeed"`
 	BurrowingSpeed   int                `bson:"burrowingspeed"`
+	Initiative       int                `bson:"initiative"`
 	ExhaustionLevel  int                `bson:"exhaustionlevel"`
 	MainAttributes   MainAttributes     `bson:"mainattributes"`
 	Modifiers        Modifiers          `bson:"modifiers"`
@@ -22,4 +23,8 @@ type Character struct {
 	Skills           Skills             `bson:"skills"`
 	CharacterMotives CharacterMotives   `bson:"charactermotives"`
 	Feats            []Feats            `bson:"feats"`
+	MaxCarryWeight   int                `bson:"maxcarryweight"`
+	CarryWeight      int                `bson:"carryweight"`
+	Inventory        []Items            `bson:"inventory"`
+	StatusAfflicted  string             `bson:"statusafflicted"`
 }
