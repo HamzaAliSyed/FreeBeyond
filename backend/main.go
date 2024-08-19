@@ -30,6 +30,7 @@ func main() {
 	routes.FeatRoutes(backend)
 	routes.AccountRoutes(backend)
 	routes.CharacterManagerRoutes(backend)
+	routes.CharacterComponentsRoute(backend)
 
 	backend.HandleFunc("/", genericOk)
 	log.Fatal(http.ListenAndServe(":"+port, backend))

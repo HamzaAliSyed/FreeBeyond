@@ -9,6 +9,7 @@ type Character struct {
 	PlayerName       string             `bson:"playername,omitempty"`
 	ProficiencyBonus int                `bson:"proficiencybonus"`
 	Inspiration      int                `bson:"inspiration"`
+	Race             Race               `bson:"race"`
 	ArmourClass      int                `bson:"armourclass"`
 	LandSpeed        int                `bson:"landspeed"`
 	FlyingSpeed      int                `bson:"flyingspeed"`
