@@ -52,19 +52,22 @@ func UpdateAbilityScore(characterID string, abilityscore string, value int) (mod
 }
 
 func AddProfiencyToSkill(character *models.Character, SkillName string) models.Skills {
-	var skills = character.Skills
+	skills := character.Skills
 
-	for _, skill := range skills.SkillList {
-		if SkillName == skill.Name {
-			fmt.Printf("Before Update, for skill %v final value was %v", skill.Name, skill.FinalSkillValue)
-			skill.NumberOfProficiencies += 1
-			skill.FinalSkillValue = skill.AssociatedAttributeValue + (int(skill.NumberOfProficiencies) * skill.ProficiencyBonus) + skill.AdditionalBoostValue
+	for i := range skills.SkillList {
+		if SkillName == skills.SkillList[i].Name {
+			fmt.Printf("Before Update, for skill %v final value was %v\n", skills.SkillList[i].Name, skills.SkillList[i].FinalSkillValue)
+			skills.SkillList[i].NumberOfProficiencies += 1
+			skills.SkillList[i].ProficiencyBonus = character.ProficiencyBonus
+			skills.SkillList[i].FinalSkillValue = skills.SkillList[i].AssociatedAttributeValue +
+				(int(skills.SkillList[i].NumberOfProficiencies) * character.ProficiencyBonus) +
+				skills.SkillList[i].AdditionalBoostValue
+			fmt.Printf("Before Update, for skill %v final value was %v\n", skills.SkillList[i].Name, skills.SkillList[i].FinalSkillValue)
 			break
 		}
 	}
 
 	return skills
-
 }
 
 func UpdateCharacterToDB(character *models.Character) {
@@ -130,21 +133,27 @@ func UpdateSkillsAfterASI(character *models.Character, ability string) models.Sk
 			switch ability {
 			case "Strength":
 				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.StrengthModifier
+				skills.SkillList[i].FinalSkillValue = skills.SkillList[i].AssociatedAttributeValue + (skills.SkillList[i].ProficiencyBonus * int(skills.SkillList[i].NumberOfProficiencies)) + skills.SkillList[i].AdditionalBoostValue
 				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
 			case "Dexterity":
 				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.DexterityModifier
+				skills.SkillList[i].FinalSkillValue = skills.SkillList[i].AssociatedAttributeValue + (skills.SkillList[i].ProficiencyBonus * int(skills.SkillList[i].NumberOfProficiencies)) + skills.SkillList[i].AdditionalBoostValue
 				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
 			case "Constitution":
 				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.ConstitutionModifier
+				skills.SkillList[i].FinalSkillValue = skills.SkillList[i].AssociatedAttributeValue + (skills.SkillList[i].ProficiencyBonus * int(skills.SkillList[i].NumberOfProficiencies)) + skills.SkillList[i].AdditionalBoostValue
 				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
 			case "Intelligence":
 				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.IntelligenceModifier
+				skills.SkillList[i].FinalSkillValue = skills.SkillList[i].AssociatedAttributeValue + (skills.SkillList[i].ProficiencyBonus * int(skills.SkillList[i].NumberOfProficiencies)) + skills.SkillList[i].AdditionalBoostValue
 				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
 			case "Wisdom":
 				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.WisdomModifier
+				skills.SkillList[i].FinalSkillValue = skills.SkillList[i].AssociatedAttributeValue + (skills.SkillList[i].ProficiencyBonus * int(skills.SkillList[i].NumberOfProficiencies)) + skills.SkillList[i].AdditionalBoostValue
 				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
 			case "Charisma":
 				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.CharismaModifier
+				skills.SkillList[i].FinalSkillValue = skills.SkillList[i].AssociatedAttributeValue + (skills.SkillList[i].ProficiencyBonus * int(skills.SkillList[i].NumberOfProficiencies)) + skills.SkillList[i].AdditionalBoostValue
 				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
 			default:
 				fmt.Printf("Unrecognized ability: %v\n", ability)

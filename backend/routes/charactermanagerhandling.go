@@ -518,6 +518,8 @@ func AddBackGroundCharacter(response http.ResponseWriter, request *http.Request)
 		SecondAttribute string `json:"secondattribute"`
 		FirstValue      int    `json:"firstvalue"`
 		SecondValue     int    `json:"secondvalue"`
+		FirstSkill      string `json:"firstskill"`
+		SecondSkill     string `json:"secondskill"`
 	}
 
 	jsonparseerror := json.NewDecoder(request.Body).Decode(&BackgroundInstance)
@@ -553,6 +555,10 @@ func AddBackGroundCharacter(response http.ResponseWriter, request *http.Request)
 	character.SavingThrow = utils.UpdateSavingThrowsAfterASI(character)
 	character.MaxCarryWeight = utils.UpdateMaxCarryWeight(character)
 	character.Background = BackgroundInstance.BackgroundName
+	utils.UpdateCharacterToDB(character)
+
+	utils.AddProfiencyToSkill(character, BackgroundInstance.FirstSkill)
+	utils.AddProfiencyToSkill(character, BackgroundInstance.SecondSkill)
 	utils.UpdateCharacterToDB(character)
 
 	// We are now returning
