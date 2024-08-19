@@ -204,6 +204,7 @@ func MaxCarryWeightCalculator(characterid string) int {
 	}
 
 	var maxcarryweight int = character.MainAttributes.StrengthScore * 15
+	fmt.Println(character.MainAttributes.StrengthScore)
 	fmt.Println(maxcarryweight)
 	return maxcarryweight
 }
@@ -225,4 +226,15 @@ func CarryWeightCalculator(characterid string) int {
 	}
 	fmt.Println(weight)
 	return weight
+}
+
+func GetProficiencyBonus(characterid string) int {
+	character, characterretrieveerror := RetrieveCharacter(characterid, database.Characters)
+	if characterretrieveerror != nil {
+		msg := fmt.Errorf("error encountered: %v", characterretrieveerror)
+		fmt.Println(msg)
+		return 0
+	}
+
+	return character.ProficiencyBonus
 }

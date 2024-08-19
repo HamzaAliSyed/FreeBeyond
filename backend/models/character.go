@@ -16,6 +16,7 @@ type Character struct {
 	ClimbingSpeed    int                `bson:"climbingspeed"`
 	BurrowingSpeed   int                `bson:"burrowingspeed"`
 	Initiative       int                `bson:"initiative"`
+	Background       string             `bson:"background"`
 	ExhaustionLevel  int                `bson:"exhaustionlevel"`
 	MainAttributes   MainAttributes     `bson:"mainattributes"`
 	Modifiers        Modifiers          `bson:"modifiers"`

@@ -17,6 +17,7 @@ import (
 const NONLEGENDARYCHARACTERMAX = 20
 const LEGENDARYCHARACTERMAX = 26
 
+var InstanceMainAttributes models.MainAttributes
 var InstanceModifiers models.Modifiers
 var InstanceSavingThrow []models.SavingThrow
 var InstanceSkill models.Skills
@@ -28,6 +29,7 @@ func CharacterManagerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/charactergeneration/skills/", HandleSkillsFactory)
 	mux.HandleFunc("/api/charactergeneration/addcharactermotives", HandleAddCharacterMotives)
 	mux.HandleFunc("/api/charactermodify/addfeats", HandleAddFeatsToCharacter)
+	mux.HandleFunc("/api/charactermodify/addbackground", AddBackGroundCharacter)
 }
 
 type AbilityScoreModifiers struct {
@@ -197,12 +199,8 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 		CharismaModifier:     utils.ModifierCalculator(CharacterAbilityScore.Charisma),
 	}
 
-	var characterid = character.ID.Hex()
-
 	utils.InitialSavingThrowsGenerator(character)
 	utils.InitializeSkillsArray(character, database.Skills)
-	maxcarryweight := utils.MaxCarryWeightCalculator(characterid)
-	carryweight := utils.CarryWeightCalculator(characterid)
 
 	filter := bson.M{"_id": character.ID}
 	update := bson.M{
@@ -211,8 +209,6 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 			"modifiers":      character.Modifiers,
 			"savingthrow":    character.SavingThrow,
 			"skills":         character.Skills,
-			"maxcarryweight": maxcarryweight,
-			"carryweight":    carryweight,
 		},
 	}
 
@@ -220,6 +216,22 @@ func AddAttributes(response http.ResponseWriter, request *http.Request) {
 	if updateErr != nil {
 		http.Error(response, "Failed to update character", http.StatusInternalServerError)
 		return
+	} else {
+		fmt.Printf("Character had kick ass stats added and i am here to debug %v", character.ID)
+		var characteridstring string = character.ID.Hex()
+		maxcarryweight := utils.MaxCarryWeightCalculator(characteridstring)
+		carryweight := utils.CarryWeightCalculator(characteridstring)
+		fmt.Println("Now trying second update")
+		character.MaxCarryWeight = maxcarryweight
+		character.CarryWeight = carryweight
+		_, replaceError := database.Characters.ReplaceOne(context.TODO(), filter, character)
+		if replaceError != nil {
+			fmt.Println("Something went wrong in the second update")
+			msg := fmt.Errorf("error happened: %v", replaceError)
+			fmt.Println(msg)
+		} else {
+			fmt.Println("Carry Weight problem solved")
+		}
 	}
 
 	response.WriteHeader(http.StatusOK)
@@ -494,4 +506,46 @@ func HandleAddFeatsToCharacter(response http.ResponseWriter, request *http.Reque
 			return
 		}
 	}
+}
+
+func AddBackGroundCharacter(response http.ResponseWriter, request *http.Request) {
+	// Partially Implementing for Available Fields
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	utils.OnlyPost(response, request)
+	var BackgroundInstance struct {
+		CharacterID     string `json:"characterID"`
+		BackgroundName  string `json:"backgroundname"`
+		FirstAttribute  string `json:"firstattribute"`
+		SecondAttribute string `json:"secondattribute"`
+		FirstValue      int    `json:"firstvalue"`
+		SecondValue     int    `json:"secondvalue"`
+	}
+
+	jsonparseerror := json.NewDecoder(request.Body).Decode(&BackgroundInstance)
+
+	if jsonparseerror != nil {
+		http.Error(response, "Error Parsing the request JSON", http.StatusBadRequest)
+		return
+	}
+
+	character, characterErr := utils.RetrieveCharacter(BackgroundInstance.CharacterID, database.Characters)
+	if characterErr != nil {
+		http.Error(response, "Error finding Character", http.StatusBadRequest)
+		return
+	}
+
+	character.Background = BackgroundInstance.BackgroundName
+	character.MainAttributes, character.Modifiers = utils.UpdateAbilityScore(BackgroundInstance.CharacterID, BackgroundInstance.FirstAttribute, BackgroundInstance.FirstValue)
+	utils.InitialSavingThrowsGenerator(character)
+	utils.InitializeSkillsArray(character, database.Skills)
+	character.MaxCarryWeight = utils.MaxCarryWeightCalculator(BackgroundInstance.CharacterID)
+	utils.UpdateCharacterToDB(character)
+	character.MainAttributes, character.Modifiers = utils.UpdateAbilityScore(BackgroundInstance.CharacterID, BackgroundInstance.SecondAttribute, BackgroundInstance.SecondValue)
+	utils.InitialSavingThrowsGenerator(character)
+	utils.InitializeSkillsArray(character, database.Skills)
+	character.MaxCarryWeight = utils.MaxCarryWeightCalculator(BackgroundInstance.CharacterID)
+	utils.UpdateCharacterToDB(character)
+	response.WriteHeader(http.StatusOK)
+	response.Write([]byte("Background Successfully Added"))
+
 }
