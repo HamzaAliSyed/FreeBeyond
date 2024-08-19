@@ -84,3 +84,60 @@ func UpdateCharacterToDB(character *models.Character) {
 		println("Update of Character was successful")
 	}
 }
+
+func UpdateSavingThrowsAfterASI(character *models.Character) *[]models.SavingThrow {
+	for _, savingThrow := range character.SavingThrow {
+		switch savingThrow.Attribute {
+		case "Strength":
+			{
+				if savingThrow.AttributeModifier != character.Modifiers.StrengthModifier {
+					savingThrow.AttributeModifier = character.Modifiers.StrengthModifier
+					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
+					fmt.Printf("Saving throw of Strength is now %v", savingThrow.SavingThrowValue)
+				}
+			}
+		case "Dexterity":
+			{
+				if savingThrow.AttributeModifier != character.Modifiers.DexterityModifier {
+					savingThrow.AttributeModifier = character.Modifiers.DexterityModifier
+					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
+					fmt.Printf("Saving throw of Dexterity is now %v", savingThrow.SavingThrowValue)
+				}
+			}
+		case "Constitution":
+			{
+				if savingThrow.AttributeModifier != character.Modifiers.ConstitutionModifier {
+					savingThrow.AttributeModifier = character.Modifiers.ConstitutionModifier
+					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
+					fmt.Printf("Saving throw of Constitution is now %v", savingThrow.SavingThrowValue)
+				}
+			}
+		case "Intelligence":
+			{
+				if savingThrow.AttributeModifier != character.Modifiers.IntelligenceModifier {
+					savingThrow.AttributeModifier = character.Modifiers.IntelligenceModifier
+					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
+					fmt.Printf("Saving throw of Intelligence is now %v", savingThrow.SavingThrowValue)
+				}
+			}
+		case "Wisdom":
+			{
+				if savingThrow.AttributeModifier != character.Modifiers.WisdomModifier {
+					savingThrow.AttributeModifier = character.Modifiers.WisdomModifier
+					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
+					fmt.Printf("Saving throw of Wisdom is now %v", savingThrow.SavingThrowValue)
+				}
+			}
+		case "Charisma":
+			{
+				if savingThrow.AttributeModifier != character.Modifiers.CharismaModifier {
+					savingThrow.AttributeModifier = character.Modifiers.CharismaModifier
+					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
+					fmt.Printf("Saving throw of Charisma is now %v", savingThrow.SavingThrowValue)
+				}
+			}
+		}
+	}
+
+	return &character.SavingThrow
+}
