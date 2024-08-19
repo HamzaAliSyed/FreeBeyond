@@ -30,6 +30,7 @@ func CharacterManagerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/charactergeneration/addcharactermotives", HandleAddCharacterMotives)
 	mux.HandleFunc("/api/charactermodify/addfeats", HandleAddFeatsToCharacter)
 	mux.HandleFunc("/api/charactermodify/addbackground", AddBackGroundCharacter)
+	mux.HandleFunc("/api/character/addrace/", HandleAddRacetoCharacter)
 }
 
 type AbilityScoreModifiers struct {
@@ -565,4 +566,124 @@ func AddBackGroundCharacter(response http.ResponseWriter, request *http.Request)
 	fmt.Println("Now returning response")
 	response.WriteHeader(http.StatusOK)
 	response.Write([]byte("Background added to character"))
+}
+
+func HandleAddRacetoCharacter(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	utils.OnlyPost(response, request)
+
+	var RaceAddRequest struct {
+		CharacterID    string   `json:"characterid"`
+		RaceName       string   `json:"racename"`
+		ExtraLanguages []string `json:"language"`
+	}
+
+	jsonparseerror := json.NewDecoder(request.Body).Decode(&RaceAddRequest)
+
+	if jsonparseerror != nil {
+		http.Error(response, "Error Parsing JSON", http.StatusBadRequest)
+		return
+	}
+
+	character, characterretrieveerror := utils.RetrieveCharacter(RaceAddRequest.CharacterID, database.Characters)
+
+	if characterretrieveerror != nil {
+		http.Error(response, characterretrieveerror.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if character.Race != "" {
+		http.Error(response, "The character already has a race", http.StatusUnauthorized)
+		return
+	}
+
+	var targetRace models.Race
+
+	racename := bson.D{
+		{Key: "name", Value: RaceAddRequest.RaceName},
+	}
+
+	raceQueryError := database.Races.FindOne(context.TODO(), racename).Decode(&targetRace)
+
+	if raceQueryError != nil {
+		http.Error(response, raceQueryError.Error(), http.StatusBadRequest)
+		return
+	}
+	for speedType, speedValue := range targetRace.MovementSpeed {
+		switch speedType {
+		case "landspeed":
+			{
+				character.LandSpeed = speedValue
+			}
+		case "flyingspeed":
+			{
+				character.FlyingSpeed = speedValue
+			}
+		case "swimmingspeed":
+			{
+				character.SwimmingSpeed = speedValue
+			}
+		case "climbingspeed":
+			{
+				character.ClimbingSpeed = speedValue
+			}
+		case "burrowingspeed":
+			{
+				character.BurrowingSpeed = speedValue
+			}
+		}
+	}
+
+	if character.Appearance == nil {
+		character.Appearance = make(map[string]string)
+		character.Appearance["size"] = targetRace.Size
+	} else {
+		character.Appearance["size"] = targetRace.Size
+	}
+
+	utils.UpdateCharacterToDB(character)
+
+	characterID := RaceAddRequest.CharacterID
+
+	for stat, boost := range targetRace.StatsBoost {
+		character.MainAttributes, character.Modifiers = utils.UpdateAbilityScore(characterID, stat, boost)
+		utils.UpdateCharacterToDB(character)
+		statWithFirstCap := utils.CapitalizeFirstLetter(stat)
+		character.Skills = utils.UpdateSkillsAfterASI(character, statWithFirstCap)
+		character.SavingThrow = utils.UpdateSavingThrowsAfterASI(character)
+		character.MaxCarryWeight = utils.UpdateMaxCarryWeight(character)
+		utils.UpdateCharacterToDB(character)
+	}
+
+	languages := append(targetRace.Languages, RaceAddRequest.ExtraLanguages...)
+	character.Languages = languages
+
+	utils.UpdateCharacterToDB(character)
+
+	if len(targetRace.AdvantageSkills) > 0 {
+		for _, skill := range targetRace.AdvantageSkills {
+			utils.AddAdvantageToSkill(character, skill)
+		}
+	}
+
+	if len(targetRace.SkillProficiencies) > 0 {
+		for _, skill := range targetRace.SkillProficiencies {
+			utils.AddProfiencyToSkill(character, skill)
+		}
+	}
+
+	utils.UpdateCharacterToDB(character)
+
+	if len(targetRace.SavingThrows) > 0 {
+		for operation, savingthrow := range targetRace.SavingThrows {
+			if operation == "Advantage" {
+				character.SavingThrow = utils.AddAdvantageToSavingThrows(character, savingthrow)
+			} else if operation == "Add Proficiency" {
+				character.SavingThrow = utils.AddProfiencyToSavingThrow(character, savingthrow)
+			}
+		}
+	}
+
+	utils.UpdateCharacterToDB(character)
+
 }

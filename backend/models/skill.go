@@ -11,6 +11,7 @@ type Skill struct {
 	ProficiencyBonus         int                `bson:"proficiencybonus"`
 	AdditionalBoost          string             `bson:"additionalboost"`
 	AdditionalBoostValue     int                `bson:"additionalboostvalue"`
+	HasAdvantage             bool               `bson:"hasadvantage"`
 	FinalSkillValue          int                `bson:"skillvalue"`
 }
 

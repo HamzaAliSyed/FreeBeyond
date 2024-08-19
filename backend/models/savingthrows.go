@@ -8,4 +8,5 @@ type SavingThrow struct {
 	AttributeModifier     int                `bson:"attributemodifier"`
 	NumberOfProficiencies int                `bson:"numberofproficiencies"`
 	SavingThrowValue      int                `bson:"savingthrowvalue"`
+	HasAdvantage          bool               `bson:"hasadvantage"`
 }

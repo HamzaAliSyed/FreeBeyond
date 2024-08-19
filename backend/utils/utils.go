@@ -44,7 +44,7 @@ func RetrieveCharacter(characterid string, db *mongo.Collection) (*models.Charac
 	objectID, objectIDError := primitive.ObjectIDFromHex(characterid)
 
 	if objectIDError != nil {
-		return nil, fmt.Errorf("invalid ID format")
+		return nil, fmt.Errorf("the error is %s", objectIDError.Error())
 	}
 
 	filter := bson.M{"_id": objectID}
@@ -106,6 +106,7 @@ func InitialSavingThrowsGenerator(character *models.Character) []models.SavingTh
 			AttributeModifier:     int(fieldValue.Int()),
 			SavingThrowValue:      int(fieldValue.Int()),
 			NumberOfProficiencies: 0,
+			HasAdvantage:          false,
 		}
 
 		savingThrows = append(savingThrows, savingThrow)
@@ -151,6 +152,8 @@ func InitializeSkillsArray(character *models.Character, skills *mongo.Collection
 		case "Charisma":
 			skill.AssociatedAttributeValue = character.Modifiers.CharismaModifier
 		}
+
+		skill.HasAdvantage = false
 
 		skill.FinalSkillValue = skill.AssociatedAttributeValue + int(skill.NumberOfProficiencies*float64(skill.ProficiencyBonus)) + skill.AdditionalBoostValue
 
@@ -224,7 +227,7 @@ func CarryWeightCalculator(characterid string) int {
 		weight += item.Weight
 	}
 	if weight >= character.MaxCarryWeight {
-		character.StatusAfflicted = "Encumbered"
+		character.StatusAfflicted = append(character.StatusAfflicted, "Encumbered")
 	}
 	fmt.Println(weight)
 	return weight

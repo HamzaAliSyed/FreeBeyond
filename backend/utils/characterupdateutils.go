@@ -169,3 +169,43 @@ func UpdateMaxCarryWeight(character *models.Character) int {
 	carryweightmax := strengthScore * 15
 	return carryweightmax
 }
+
+func AddAdvantageToSkill(character *models.Character, SkillName string) models.Skills {
+	skills := character.Skills
+
+	for i := range skills.SkillList {
+		if SkillName == skills.SkillList[i].Name {
+			skills.SkillList[i].HasAdvantage = true
+			break
+		}
+	}
+
+	return skills
+}
+
+func AddAdvantageToSavingThrows(character *models.Character, SavingThrow string) []models.SavingThrow {
+	SavingThrows := character.SavingThrow
+
+	for i := range SavingThrows {
+		if SavingThrows[i].Attribute == SavingThrow {
+			SavingThrows[i].HasAdvantage = true
+			break
+		}
+	}
+
+	return SavingThrows
+}
+
+func AddProfiencyToSavingThrow(character *models.Character, SavingThrow string) []models.SavingThrow {
+	savingthrows := character.SavingThrow
+
+	for i := range savingthrows {
+		if SavingThrow == savingthrows[i].Attribute {
+			savingthrows[i].NumberOfProficiencies += 1
+			savingthrows[i].SavingThrowValue = savingthrows[i].AttributeModifier + (savingthrows[i].NumberOfProficiencies * character.ProficiencyBonus)
+			break
+		}
+	}
+
+	return savingthrows
+}
