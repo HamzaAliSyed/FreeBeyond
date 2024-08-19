@@ -509,7 +509,6 @@ func HandleAddFeatsToCharacter(response http.ResponseWriter, request *http.Reque
 }
 
 func AddBackGroundCharacter(response http.ResponseWriter, request *http.Request) {
-	// Partially Implementing for Available Fields
 	utils.AllowCorsHeaderAndPreflight(response, request)
 	utils.OnlyPost(response, request)
 	var BackgroundInstance struct {
@@ -534,18 +533,30 @@ func AddBackGroundCharacter(response http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	character.Background = BackgroundInstance.BackgroundName
-	character.MainAttributes, character.Modifiers = utils.UpdateAbilityScore(BackgroundInstance.CharacterID, BackgroundInstance.FirstAttribute, BackgroundInstance.FirstValue)
-	utils.InitialSavingThrowsGenerator(character)
-	utils.InitializeSkillsArray(character, database.Skills)
-	character.MaxCarryWeight = utils.MaxCarryWeightCalculator(BackgroundInstance.CharacterID)
-	utils.UpdateCharacterToDB(character)
-	character.MainAttributes, character.Modifiers = utils.UpdateAbilityScore(BackgroundInstance.CharacterID, BackgroundInstance.SecondAttribute, BackgroundInstance.SecondValue)
-	utils.InitialSavingThrowsGenerator(character)
-	utils.InitializeSkillsArray(character, database.Skills)
-	character.MaxCarryWeight = utils.MaxCarryWeightCalculator(BackgroundInstance.CharacterID)
-	utils.UpdateCharacterToDB(character)
-	response.WriteHeader(http.StatusOK)
-	response.Write([]byte("Background Successfully Added"))
+	characterID := BackgroundInstance.CharacterID
 
+	capFirstAttribute := utils.CapitalizeFirstLetter(BackgroundInstance.FirstAttribute)
+	capSecondAttribute := utils.CapitalizeFirstLetter(BackgroundInstance.SecondAttribute)
+	fmt.Println("First we are updating first attribute")
+
+	character.MainAttributes, character.Modifiers = utils.UpdateAbilityScore(characterID, BackgroundInstance.FirstAttribute, BackgroundInstance.FirstValue)
+	utils.UpdateCharacterToDB(character)
+
+	character.SavingThrow = utils.UpdateSavingThrowsAfterASI(character)
+	character.Skills = utils.UpdateSkillsAfterASI(character, capFirstAttribute)
+	character.MaxCarryWeight = utils.UpdateMaxCarryWeight(character)
+	utils.UpdateCharacterToDB(character)
+
+	character.MainAttributes, character.Modifiers = utils.UpdateAbilityScore(characterID, BackgroundInstance.SecondAttribute, BackgroundInstance.SecondValue)
+	utils.UpdateCharacterToDB(character)
+	character.Skills = utils.UpdateSkillsAfterASI(character, capSecondAttribute)
+	character.SavingThrow = utils.UpdateSavingThrowsAfterASI(character)
+	character.MaxCarryWeight = utils.UpdateMaxCarryWeight(character)
+	character.Background = BackgroundInstance.BackgroundName
+	utils.UpdateCharacterToDB(character)
+
+	// We are now returning
+	fmt.Println("Now returning response")
+	response.WriteHeader(http.StatusOK)
+	response.Write([]byte("Background added to character"))
 }

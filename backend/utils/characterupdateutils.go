@@ -51,27 +51,20 @@ func UpdateAbilityScore(characterID string, abilityscore string, value int) (mod
 
 }
 
-func AddProfiencyToSkill(characterID string, SkillName string) {
-	character, characterretrieveErr := RetrieveCharacter(characterID, database.Characters)
-	if characterretrieveErr != nil {
-		fmt.Println("Could not find the character from ID")
-		log.Fatal("Invalid ID")
-	}
-	for _, skill := range character.Skills.SkillList {
-		if skill.Name == SkillName {
-			toadd := GetProficiencyBonus(characterID)
+func AddProfiencyToSkill(character *models.Character, SkillName string) models.Skills {
+	var skills = character.Skills
+
+	for _, skill := range skills.SkillList {
+		if SkillName == skill.Name {
+			fmt.Printf("Before Update, for skill %v final value was %v", skill.Name, skill.FinalSkillValue)
 			skill.NumberOfProficiencies += 1
-			skill.ProficiencyBonus = toadd
-			skill.FinalSkillValue = skill.AssociatedAttributeValue + (skill.ProficiencyBonus * int(skill.NumberOfProficiencies)) + skill.AdditionalBoostValue
-			fmt.Printf("Updated %s to have proficiency, now final value is %v", skill.Name, skill.FinalSkillValue)
+			skill.FinalSkillValue = skill.AssociatedAttributeValue + (int(skill.NumberOfProficiencies) * skill.ProficiencyBonus) + skill.AdditionalBoostValue
 			break
 		}
 	}
-	update := bson.D{{Key: "$set", Value: character}}
-	_, err := database.Characters.UpdateOne(context.TODO(), bson.D{{Key: "_id", Value: character.ID}}, update)
-	if err != nil {
-		fmt.Println(fmt.Errorf("could not update character: %w", err))
-	}
+
+	return skills
+
 }
 
 func UpdateCharacterToDB(character *models.Character) {
@@ -85,59 +78,85 @@ func UpdateCharacterToDB(character *models.Character) {
 	}
 }
 
-func UpdateSavingThrowsAfterASI(character *models.Character) *[]models.SavingThrow {
-	for _, savingThrow := range character.SavingThrow {
-		switch savingThrow.Attribute {
+func UpdateSavingThrowsAfterASI(character *models.Character) []models.SavingThrow {
+	for i := range character.SavingThrow {
+		switch character.SavingThrow[i].Attribute {
 		case "Strength":
-			{
-				if savingThrow.AttributeModifier != character.Modifiers.StrengthModifier {
-					savingThrow.AttributeModifier = character.Modifiers.StrengthModifier
-					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
-					fmt.Printf("Saving throw of Strength is now %v", savingThrow.SavingThrowValue)
-				}
+			if character.SavingThrow[i].AttributeModifier != character.Modifiers.StrengthModifier {
+				character.SavingThrow[i].AttributeModifier = character.Modifiers.StrengthModifier
+				character.SavingThrow[i].SavingThrowValue = character.SavingThrow[i].AttributeModifier + (character.SavingThrow[i].NumberOfProficiencies * character.ProficiencyBonus)
+				fmt.Printf("Saving throw of Strength is now %v \n", character.SavingThrow[i].SavingThrowValue)
 			}
 		case "Dexterity":
-			{
-				if savingThrow.AttributeModifier != character.Modifiers.DexterityModifier {
-					savingThrow.AttributeModifier = character.Modifiers.DexterityModifier
-					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
-					fmt.Printf("Saving throw of Dexterity is now %v", savingThrow.SavingThrowValue)
-				}
+			if character.SavingThrow[i].AttributeModifier != character.Modifiers.DexterityModifier {
+				character.SavingThrow[i].AttributeModifier = character.Modifiers.DexterityModifier
+				character.SavingThrow[i].SavingThrowValue = character.SavingThrow[i].AttributeModifier + (character.SavingThrow[i].NumberOfProficiencies * character.ProficiencyBonus)
+				fmt.Printf("Saving throw of Dexterity is now %v\n", character.SavingThrow[i].SavingThrowValue)
 			}
 		case "Constitution":
-			{
-				if savingThrow.AttributeModifier != character.Modifiers.ConstitutionModifier {
-					savingThrow.AttributeModifier = character.Modifiers.ConstitutionModifier
-					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
-					fmt.Printf("Saving throw of Constitution is now %v", savingThrow.SavingThrowValue)
-				}
+			if character.SavingThrow[i].AttributeModifier != character.Modifiers.ConstitutionModifier {
+				character.SavingThrow[i].AttributeModifier = character.Modifiers.ConstitutionModifier
+				character.SavingThrow[i].SavingThrowValue = character.SavingThrow[i].AttributeModifier + (character.SavingThrow[i].NumberOfProficiencies * character.ProficiencyBonus)
+				fmt.Printf("Saving throw of Constitution is now %v\n", character.SavingThrow[i].SavingThrowValue)
 			}
 		case "Intelligence":
-			{
-				if savingThrow.AttributeModifier != character.Modifiers.IntelligenceModifier {
-					savingThrow.AttributeModifier = character.Modifiers.IntelligenceModifier
-					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
-					fmt.Printf("Saving throw of Intelligence is now %v", savingThrow.SavingThrowValue)
-				}
+			if character.SavingThrow[i].AttributeModifier != character.Modifiers.IntelligenceModifier {
+				character.SavingThrow[i].AttributeModifier = character.Modifiers.IntelligenceModifier
+				character.SavingThrow[i].SavingThrowValue = character.SavingThrow[i].AttributeModifier + (character.SavingThrow[i].NumberOfProficiencies * character.ProficiencyBonus)
+				fmt.Printf("Saving throw of Intelligence is now %v\n", character.SavingThrow[i].SavingThrowValue)
 			}
 		case "Wisdom":
-			{
-				if savingThrow.AttributeModifier != character.Modifiers.WisdomModifier {
-					savingThrow.AttributeModifier = character.Modifiers.WisdomModifier
-					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
-					fmt.Printf("Saving throw of Wisdom is now %v", savingThrow.SavingThrowValue)
-				}
+			if character.SavingThrow[i].AttributeModifier != character.Modifiers.WisdomModifier {
+				character.SavingThrow[i].AttributeModifier = character.Modifiers.WisdomModifier
+				character.SavingThrow[i].SavingThrowValue = character.SavingThrow[i].AttributeModifier + (character.SavingThrow[i].NumberOfProficiencies * character.ProficiencyBonus)
+				fmt.Printf("Saving throw of Wisdom is now %v\n", character.SavingThrow[i].SavingThrowValue)
 			}
 		case "Charisma":
-			{
-				if savingThrow.AttributeModifier != character.Modifiers.CharismaModifier {
-					savingThrow.AttributeModifier = character.Modifiers.CharismaModifier
-					savingThrow.SavingThrowValue = savingThrow.AttributeModifier + (savingThrow.NumberOfProficiencies * character.ProficiencyBonus)
-					fmt.Printf("Saving throw of Charisma is now %v", savingThrow.SavingThrowValue)
-				}
+			if character.SavingThrow[i].AttributeModifier != character.Modifiers.CharismaModifier {
+				character.SavingThrow[i].AttributeModifier = character.Modifiers.CharismaModifier
+				character.SavingThrow[i].SavingThrowValue = character.SavingThrow[i].AttributeModifier + (character.SavingThrow[i].NumberOfProficiencies * character.ProficiencyBonus)
+				fmt.Printf("Saving throw of Charisma is now %v\n", character.SavingThrow[i].SavingThrowValue)
 			}
 		}
 	}
 
-	return &character.SavingThrow
+	return character.SavingThrow
+}
+
+func UpdateSkillsAfterASI(character *models.Character, ability string) models.Skills {
+	var skills = character.Skills
+	for i := range skills.SkillList {
+		if skills.SkillList[i].AssociatedAttribute == ability {
+			switch ability {
+			case "Strength":
+				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.StrengthModifier
+				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
+			case "Dexterity":
+				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.DexterityModifier
+				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
+			case "Constitution":
+				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.ConstitutionModifier
+				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
+			case "Intelligence":
+				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.IntelligenceModifier
+				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
+			case "Wisdom":
+				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.WisdomModifier
+				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
+			case "Charisma":
+				skills.SkillList[i].AssociatedAttributeValue = character.Modifiers.CharismaModifier
+				fmt.Printf("For skill %v attributed value %v was increased to %v\n", skills.SkillList[i].Name, skills.SkillList[i].AssociatedAttribute, skills.SkillList[i].AssociatedAttributeValue)
+			default:
+				fmt.Printf("Unrecognized ability: %v\n", ability)
+			}
+		}
+	}
+
+	return skills
+}
+
+func UpdateMaxCarryWeight(character *models.Character) int {
+	strengthScore := character.MainAttributes.StrengthScore
+	carryweightmax := strengthScore * 15
+	return carryweightmax
 }

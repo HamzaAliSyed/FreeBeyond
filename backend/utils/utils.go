@@ -10,6 +10,8 @@ import (
 	"os"
 	"reflect"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/golang-jwt/jwt/v4"
 	"go.mongodb.org/mongo-driver/bson"
@@ -237,4 +239,9 @@ func GetProficiencyBonus(characterid string) int {
 	}
 
 	return character.ProficiencyBonus
+}
+
+func CapitalizeFirstLetter(s string) string {
+	r, n := utf8.DecodeRuneInString(s)
+	return string(unicode.ToUpper(r)) + s[n:]
 }
