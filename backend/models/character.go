@@ -31,4 +31,5 @@ type Character struct {
 	Inventory        []Items            `bson:"inventory"`
 	StatusAfflicted  []string           `bson:"statusafflicted"`
 	Languages        []string           `bson:"languages"`
+	Attacks          []AnAttack         `bson:"attack"`
 }

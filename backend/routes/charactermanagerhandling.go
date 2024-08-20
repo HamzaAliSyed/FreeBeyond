@@ -573,9 +573,10 @@ func HandleAddRacetoCharacter(response http.ResponseWriter, request *http.Reques
 	utils.OnlyPost(response, request)
 
 	var RaceAddRequest struct {
-		CharacterID    string   `json:"characterid"`
-		RaceName       string   `json:"racename"`
-		ExtraLanguages []string `json:"language"`
+		CharacterID         string            `json:"characterid"`
+		RaceName            string            `json:"racename"`
+		ExtraLanguages      []string          `json:"language"`
+		PhysicalAppearances map[string]string `json:"physicalappearances"`
 	}
 
 	jsonparseerror := json.NewDecoder(request.Body).Decode(&RaceAddRequest)
@@ -683,6 +684,26 @@ func HandleAddRacetoCharacter(response http.ResponseWriter, request *http.Reques
 			}
 		}
 	}
+
+	utils.UpdateCharacterToDB(character)
+
+	if len(targetRace.Attacks) == 0 {
+		meleeattack := utils.GenerateGenericMeleeAttack(character)
+		character.Attacks = append(character.Attacks, meleeattack)
+		utils.UpdateCharacterToDB(character)
+	} else {
+		character.Attacks = append(character.Attacks, targetRace.Attacks...)
+		utils.UpdateCharacterToDB(character)
+	}
+
+	character.Initiative = utils.CharacterInitiative(character)
+	utils.UpdateCharacterToDB(character)
+
+	for key, value := range RaceAddRequest.PhysicalAppearances {
+		character.Appearance[key] = value
+	}
+
+	character.Race = targetRace.Name
 
 	utils.UpdateCharacterToDB(character)
 

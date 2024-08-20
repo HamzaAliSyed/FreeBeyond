@@ -28,6 +28,7 @@ type AnAttack struct {
 	Type             string
 	Range            int
 	RangeMax         int
+	RangeMin         int
 	AttributeUsed    string
 	AttributeValue   int
 	IsProficient     bool

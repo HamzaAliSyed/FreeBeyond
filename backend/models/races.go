@@ -14,7 +14,7 @@ type Race struct {
 	FlavourText        []FlavourText      `bson:"flavourtext"`
 	SkillProficiencies []string           `bson:"skillproficiencies,omitempty"`
 	AdvantageSkills    []string           `bson:"advantageskills,omitempty"`
-	Attacks            []string           `bson:"attacks,omitempty"`
+	Attacks            []AnAttack         `bson:"attacks,omitempty"`
 	Spells             map[string]int     `bson:"spells,omitempty"`
 	Immunities         []string           `bson:"immunities,omitempty"`
 	Resistances        []string           `bson:"resistances,omitempty"`

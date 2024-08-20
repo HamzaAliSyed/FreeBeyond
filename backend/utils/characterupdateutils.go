@@ -209,3 +209,26 @@ func AddProfiencyToSavingThrow(character *models.Character, SavingThrow string) 
 
 	return savingthrows
 }
+
+func GenerateGenericMeleeAttack(character *models.Character) models.AnAttack {
+	var attack models.AnAttack
+	damage := map[string]string{
+		"Bludgeoning": "1d4+str",
+	}
+
+	attack.Name = "Unarmed Attack"
+	attack.Type = "Melee"
+	attack.Range = 5
+	attack.RangeMax = 5
+	attack.RangeMin = 0
+	attack.AttributeUsed = "strength"
+	attack.AttributeValue = character.Modifiers.StrengthModifier
+	attack.Damage = damage
+
+	return attack
+}
+
+func CharacterInitiative(character *models.Character) int {
+	initiative := character.Modifiers.DexterityModifier
+	return initiative
+}
