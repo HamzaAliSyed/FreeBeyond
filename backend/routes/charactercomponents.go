@@ -15,6 +15,9 @@ import (
 
 func CharacterComponentsRoute(mux *http.ServeMux) {
 	mux.HandleFunc("/api/charactercomponent/race/create", HandleRaceCreation)
+	mux.HandleFunc("/api/charactercomponent/class/create", HandleCreateClasses)
+	mux.HandleFunc("/api/charactercomponent/class/update", HandleUpdateClasses)
+	mux.HandleFunc("/api/charactercomponent/source/create", HandleAddSource)
 }
 
 func HandleRaceCreation(response http.ResponseWriter, request *http.Request) {
@@ -48,7 +51,7 @@ func HandleRaceCreation(response http.ResponseWriter, request *http.Request) {
 
 	var SourceLookUp models.Source
 
-	SourceQueryError := database.Source.FindOne(context.TODO(), bson.M{"name": RaceRequestInstance.Source}).Decode(&SourceLookUp)
+	SourceQueryError := database.Sources.FindOne(context.TODO(), bson.M{"name": RaceRequestInstance.Source}).Decode(&SourceLookUp)
 
 	if SourceQueryError != nil {
 		if SourceQueryError == mongo.ErrNoDocuments {
@@ -58,7 +61,7 @@ func HandleRaceCreation(response http.ResponseWriter, request *http.Request) {
 				PublishDate: "",
 			}
 
-			insertResult, insertErr := database.Source.InsertOne(context.TODO(), newSource)
+			insertResult, insertErr := database.Sources.InsertOne(context.TODO(), newSource)
 			if insertErr != nil {
 				http.Error(response, "Failed to create new source", http.StatusInternalServerError)
 				return
@@ -101,4 +104,69 @@ func HandleRaceCreation(response http.ResponseWriter, request *http.Request) {
 
 	response.WriteHeader(http.StatusCreated)
 	response.Write([]byte("New Race was created and inserted"))
+}
+
+func HandleCreateClasses(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	utils.OnlyPost(response, request)
+
+	var ClassInstance struct {
+		Name                      string   `json:"name"`
+		Hitdie                    string   `json:"hitdie"`
+		ArmorProficiencies        []string `json:"armorproficiencies"`
+		WeaponProficiencies       []string `json:"weaponproficiencies"`
+		ToolProficiencies         []string `json:"toolproficiencies"`
+		SavingThrowsProficiencies []string `json:"savingthrowsproficiencies"`
+		SkillProficiencies        []string `json:"skillproficiencies"`
+		Source                    string   `json:"source"`
+	}
+
+	jsonparseerror := json.NewDecoder(request.Body).Decode(&ClassInstance)
+
+	if jsonparseerror != nil {
+		http.Error(response, "Unable to parse json", http.StatusBadRequest)
+		return
+	}
+
+}
+
+func HandleUpdateClasses(response http.ResponseWriter, request *http.Request) {
+
+}
+
+func HandleAddSource(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	utils.OnlyPost(response, request)
+	var SourceCreateRequest struct {
+		Name        string `json:"name"`
+		Type        string `json:"type"`
+		PublishDate string `json:"publishdate"`
+	}
+
+	sourcejsonparseerror := json.NewDecoder(request.Body).Decode(&SourceCreateRequest)
+	if sourcejsonparseerror != nil {
+		http.Error(response, "Unable to parse json", http.StatusBadRequest)
+		return
+	}
+
+	var NewSource = bson.D{
+		{Key: "name", Value: SourceCreateRequest.Name},
+		{Key: "type", Value: SourceCreateRequest.Type},
+		{Key: "publishdate", Value: SourceCreateRequest.PublishDate},
+	}
+
+	update, updateError := database.Sources.InsertOne(context.TODO(), NewSource)
+
+	if updateError != nil {
+		http.Error(response, "Could not update", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	encoder := json.NewEncoder(response)
+	err := encoder.Encode(update)
+	if err != nil {
+		http.Error(response, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
 }

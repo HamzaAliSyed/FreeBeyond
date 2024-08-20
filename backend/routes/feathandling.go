@@ -45,7 +45,7 @@ func HandleCreateFeat(response http.ResponseWriter, request *http.Request) {
 
 	var SourceLookUp models.Source
 
-	SourceQueryError := database.Source.FindOne(context.TODO(), bson.M{"name": FeatFromResponse.Source}).Decode(&SourceLookUp)
+	SourceQueryError := database.Sources.FindOne(context.TODO(), bson.M{"name": FeatFromResponse.Source}).Decode(&SourceLookUp)
 
 	if SourceQueryError != nil {
 		if SourceQueryError == mongo.ErrNoDocuments {
@@ -55,7 +55,7 @@ func HandleCreateFeat(response http.ResponseWriter, request *http.Request) {
 				PublishDate: "",
 			}
 
-			insertResult, insertErr := database.Source.InsertOne(context.TODO(), newSource)
+			insertResult, insertErr := database.Sources.InsertOne(context.TODO(), newSource)
 			if insertErr != nil {
 				http.Error(response, "Failed to create new source", http.StatusInternalServerError)
 				return
