@@ -232,17 +232,3 @@ func CharacterInitiative(character *models.Character) int {
 	initiative := character.Modifiers.DexterityModifier
 	return initiative
 }
-
-func GenerateFeatureForLevel(featurename []string, featuretype []string, featureresetinformation []string) []models.ClassFeature {
-	features := []models.ClassFeature{}
-
-	for i := 0; i < len(featurename); i++ {
-		var feature models.ClassFeature
-		feature.Name = featurename[i]
-		feature.Type = featuretype[i]
-		feature.ResetInformation = featureresetinformation[i]
-		features = append(features, feature)
-	}
-
-	return features
-}
