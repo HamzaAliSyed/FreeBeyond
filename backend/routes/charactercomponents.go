@@ -111,14 +111,15 @@ func HandleCreateClasses(response http.ResponseWriter, request *http.Request) {
 	utils.OnlyPost(response, request)
 
 	var ClassInstance struct {
-		Name                      string   `json:"name"`
-		Hitdie                    string   `json:"hitdie"`
-		ArmorProficiencies        []string `json:"armorproficiencies"`
-		WeaponProficiencies       []string `json:"weaponproficiencies"`
-		ToolProficiencies         []string `json:"toolproficiencies"`
-		SavingThrowsProficiencies []string `json:"savingthrowsproficiencies"`
-		SkillProficiencies        []string `json:"skillproficiencies"`
-		Source                    string   `json:"source"`
+		Name                      string              `json:"name"`
+		CanDoSpellCasting         bool                `json:"candospellcasting"`
+		Hitdie                    string              `json:"hitdie"`
+		ArmorProficiencies        []string            `json:"armorproficiencies"`
+		WeaponProficiencies       []string            `json:"weaponproficiencies"`
+		ToolProficiencies         []string            `json:"toolproficiencies"`
+		SavingThrowsProficiencies []string            `json:"savingthrowsproficiencies"`
+		SkillProficiencies        map[string][]string `json:"skillproficiencies"`
+		Source                    string              `json:"source"`
 	}
 
 	jsonparseerror := json.NewDecoder(request.Body).Decode(&ClassInstance)
@@ -126,6 +127,45 @@ func HandleCreateClasses(response http.ResponseWriter, request *http.Request) {
 	if jsonparseerror != nil {
 		http.Error(response, "Unable to parse json", http.StatusBadRequest)
 		return
+	}
+
+	var SourceLookUp models.Source
+
+	filter := bson.M{
+		"name": ClassInstance.Source,
+	}
+
+	lookuperror := database.Sources.FindOne(context.TODO(), filter).Decode(&SourceLookUp)
+
+	if lookuperror != nil {
+		http.Error(response, "Invalid Source Name", http.StatusBadRequest)
+		return
+	}
+
+	UpdateDoc := bson.D{
+		{Key: "name", Value: ClassInstance.Name},
+		{Key: "candospellcasting", Value: ClassInstance.CanDoSpellCasting},
+		{Key: "hitdie", Value: ClassInstance.Hitdie},
+		{Key: "armorproficiencies", Value: ClassInstance.ArmorProficiencies},
+		{Key: "weaponproficiencies", Value: ClassInstance.WeaponProficiencies},
+		{Key: "toolproficiencies", Value: ClassInstance.ToolProficiencies},
+		{Key: "savingthrowsproficiencies", Value: ClassInstance.SavingThrowsProficiencies},
+		{Key: "skillproficiencies", Value: ClassInstance.SkillProficiencies},
+		{Key: "source", Value: SourceLookUp.ID},
+	}
+
+	update, updateerror := database.Classes.InsertOne(context.TODO(), UpdateDoc)
+
+	if updateerror != nil {
+		http.Error(response, "Failed to create the class", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	encoded := json.NewEncoder(response)
+	errorencode := encoded.Encode(update)
+	if errorencode != nil {
+		http.Error(response, "Cannot encode into json", http.StatusInternalServerError)
 	}
 
 }
