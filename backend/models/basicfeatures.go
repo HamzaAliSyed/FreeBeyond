@@ -54,3 +54,10 @@ type SpellAttack struct {
 	Damage         map[string]string
 	SpellReference primitive.ObjectID
 }
+
+type GenericAbility struct {
+	Name            string
+	ChargedAbility  ChargeBasedAbilities
+	MappableAbility map[string][]string
+	TabularAbility  map[string]int
+}

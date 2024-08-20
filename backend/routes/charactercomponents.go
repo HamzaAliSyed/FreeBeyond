@@ -16,7 +16,7 @@ import (
 func CharacterComponentsRoute(mux *http.ServeMux) {
 	mux.HandleFunc("/api/charactercomponent/race/create", HandleRaceCreation)
 	mux.HandleFunc("/api/charactercomponent/class/create", HandleCreateClasses)
-	mux.HandleFunc("/api/charactercomponent/class/update", HandleUpdateClasses)
+	mux.HandleFunc("/api/charactercomponent/class/update", HandleUpdateClassesLevel)
 	mux.HandleFunc("/api/charactercomponent/source/create", HandleAddSource)
 }
 
@@ -170,7 +170,71 @@ func HandleCreateClasses(response http.ResponseWriter, request *http.Request) {
 
 }
 
-func HandleUpdateClasses(response http.ResponseWriter, request *http.Request) {
+func HandleUpdateClassesLevel(response http.ResponseWriter, request *http.Request) {
+
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	utils.OnlyPost(response, request)
+
+	var ClassUpdateRequest struct {
+		Name                    string      `json:"name"`
+		LevelNumber             int         `json:"levelnumber"`
+		ProficiencyBonus        int         `json:"proficiencybonus"`
+		FeatureName             []string    `json:"featurename"`
+		FeatureType             []string    `json:"featuretype"`
+		FeatureResetInformation []string    `json:"featureresetinformation"`
+		SpellSlots              map[int]int `json:"spellslots,omitempty"`
+	}
+
+	jsonparseerror := json.NewDecoder(request.Body).Decode(&ClassUpdateRequest)
+
+	if jsonparseerror != nil {
+		http.Error(response, "Unable to parse json", http.StatusBadRequest)
+		return
+	}
+
+	filter := bson.M{
+		"name": ClassUpdateRequest.Name,
+	}
+
+	var TargetClass models.Class
+
+	classlookUpError := database.Classes.FindOne(context.TODO(), filter).Decode(&TargetClass)
+
+	if classlookUpError != nil {
+		http.Error(response, "Invalid Class Name", http.StatusBadRequest)
+		return
+	}
+
+	var level models.Level
+
+	for _, classlevel := range TargetClass.Levels {
+		if classlevel.LevelRank >= ClassUpdateRequest.LevelNumber {
+			http.Error(response, "Level is already present in class", http.StatusUnauthorized)
+			return
+		}
+	}
+	level.Class = TargetClass.Name
+	level.Features = utils.GenerateFeatureForLevel(ClassUpdateRequest.FeatureName, ClassUpdateRequest.FeatureType, ClassUpdateRequest.FeatureResetInformation)
+	level.LevelRank = ClassUpdateRequest.LevelNumber
+	level.ProficiencyBonus = ClassUpdateRequest.ProficiencyBonus
+	level.SpellSlots = ClassUpdateRequest.SpellSlots
+
+	TargetClass.Levels = append(TargetClass.Levels, level)
+	update := bson.M{
+		"$set": bson.M{
+			"levels": TargetClass.Levels,
+		},
+	}
+
+	updateResult, updateErr := database.Classes.UpdateOne(context.TODO(), filter, update)
+
+	if updateErr != nil {
+		http.Error(response, "Failed to update class levels", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(updateResult)
 
 }
 

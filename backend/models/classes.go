@@ -32,7 +32,22 @@ type Level struct {
 }
 
 type ClassFeature struct {
+	Name               string               `bson:"name"`
+	Type               string               `bson:"type"`
+	TextInformation    FlavourText          `bson:"textinformation,omitempty"`
+	ChargeBasedAbility ChargeBasedAbilities `bson:"chargedbasedability,omitempty"`
+	ResetInformation   string               `bson:"resetinformation,omitempty"`
+	ModifierAbility    string               `bson:"modifierability,omitempty"`
+	MappableAbility    map[string]int       `bson:"mappableability,omitempty"`
+	TableAbility       map[string]string    `bson:"tableability,omitempty"`
 }
 
 type SubClassFeature struct {
+	Name               string               `bson:"name"`
+	TextInformation    FlavourText          `bson:"textinformation,omitempty"`
+	ChargeBasedAbility ChargeBasedAbilities `bson:"chargedbasedability,omitempty"`
+	ResetInformation   string               `bson:"resetinformation,omitempty"`
+	ModifierAbility    string               `bson:"modifierability,omitempty"`
+	MappableAbility    map[string]int       `bson:"mappableability,omitempty"`
+	TableAbility       map[string]string    `bson:"tableability,omitempty"`
 }

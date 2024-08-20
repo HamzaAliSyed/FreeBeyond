@@ -10,6 +10,11 @@ type Character struct {
 	ProficiencyBonus int                `bson:"proficiencybonus"`
 	Inspiration      int                `bson:"inspiration"`
 	Race             string             `bson:"race"`
+	ClassAndLevel    map[string]int     `bson:"classandlevel"`
+	HitDie           string             `bson:"hitdie"`
+	NumberOfHitDie   int                `bson:"numberofhitdie"`
+	HealthPoints     int                `bson:"healthpoints"`
+	TempPoints       int                `bson:"temppoints"`
 	ArmourClass      int                `bson:"armourclass"`
 	LandSpeed        int                `bson:"landspeed"`
 	FlyingSpeed      int                `bson:"flyingspeed"`
@@ -32,4 +37,10 @@ type Character struct {
 	StatusAfflicted  []string           `bson:"statusafflicted"`
 	Languages        []string           `bson:"languages"`
 	Attacks          []AnAttack         `bson:"attack"`
+	CanSpellCast     bool               `bson:"canspellcast"`
+	SpellsAvailable  []SpellAttack      `bson:"spellsavailable"`
+	Features         []string           `bson:"features"`
+	Currency         map[string]int     `bson:"currency"`
+	Proficiencies    map[string]string  `bson:"proficiencies"`
+	OtherAbilities   []GenericAbility   `bson:"otherabilities,omitempty"`
 }
