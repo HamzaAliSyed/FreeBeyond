@@ -274,3 +274,19 @@ func HandleAddSource(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 }
+
+func UpdateTextualFeatureOfLevel(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	utils.OnlyPost(response, request)
+
+	var FeatureUpdateStruct struct {
+		Name string `json:"name"`
+	}
+
+	jsonparseerror := json.NewDecoder(request.Body).Decode(&FeatureUpdateStruct)
+
+	if jsonparseerror != nil {
+		http.Error(response, "Unable to parse json", http.StatusBadRequest)
+		return
+	}
+}

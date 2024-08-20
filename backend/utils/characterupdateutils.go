@@ -234,7 +234,7 @@ func CharacterInitiative(character *models.Character) int {
 }
 
 func GenerateFeatureForLevel(featurename []string, featuretype []string, featureresetinformation []string) []models.ClassFeature {
-	features := make([]models.ClassFeature, len(featurename))
+	features := []models.ClassFeature{}
 
 	for i := 0; i < len(featurename); i++ {
 		var feature models.ClassFeature
