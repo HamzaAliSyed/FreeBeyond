@@ -2,8 +2,6 @@ package main
 
 import (
 	"backend/database"
-	"backend/routes"
-	"backend/troubleshooting"
 	"fmt"
 	"log"
 	"net/http"
@@ -28,11 +26,6 @@ func main() {
 	database.ConnectToMongo()
 	const port = "2712"
 	backend := http.NewServeMux()
-	routes.FeatRoutes(backend)
-	routes.AccountRoutes(backend)
-	routes.CharacterManagerRoutes(backend)
-	routes.CharacterComponentsRoute(backend)
-	troubleshooting.TroubleshootingRoutes(backend)
 
 	backend.HandleFunc("/", genericOk)
 	log.Fatal(http.ListenAndServe(":"+port, backend))
