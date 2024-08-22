@@ -52,4 +52,15 @@ func handlecreatespell(response http.ResponseWriter, request *http.Request) {
 	utils.AllowCorsHeaderAndPreflight(response, request)
 	utils.OnlyPost(response, request)
 
+	var SpellCreateRequest struct {
+		Name string `json:"name"`
+	}
+
+	jsonparseerror := json.NewDecoder(request.Body).Decode(&SpellCreateRequest)
+
+	if jsonparseerror != nil {
+		http.Error(response, "Unable To parse JSON", http.StatusBadRequest)
+		return
+	}
+
 }
