@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func Handleroutes(mux *http.ServeMux) {
+func HandleCharacterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/character/create", handlecharactercreate)
 }
 

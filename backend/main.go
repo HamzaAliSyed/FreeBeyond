@@ -27,7 +27,8 @@ func main() {
 	database.ConnectToMongo()
 	const port = "2712"
 	backend := http.NewServeMux()
-	routes.Handleroutes(backend)
+	routes.HandleCharacterRoutes(backend)
+	routes.HandleComponentRoutes(backend)
 
 	backend.HandleFunc("/", genericOk)
 	log.Fatal(http.ListenAndServe(":"+port, backend))

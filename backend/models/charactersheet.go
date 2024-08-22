@@ -1,42 +1,55 @@
 package models
 
 import (
+	"backend/database"
+	"context"
 	"fmt"
+	"log"
 	"strconv"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Character struct {
-	ID                   primitive.ObjectID `bson:"_id,omitempty"`
-	Name                 string             `bson:"name"`
-	Strength             int                `bson:"strength"`
-	Dexterity            int                `bson:"dexterity"`
-	Constitution         int                `bson:"constitution"`
-	Intelligence         int                `bson:"intelligence"`
-	Wisdom               int                `bson:"wisdom"`
-	Charisma             int                `bson:"charisma"`
-	StrengthModifier     int                `bson:"strength_modifier"`
-	DexterityModifier    int                `bson:"dexterity_modifier"`
-	ConstitutionModifier int                `bson:"constitution_modifier"`
-	IntelligenceModifier int                `bson:"intelligence_modifier"`
-	WisdomModifier       int                `bson:"wisdom_modifier"`
-	CharismaModifier     int                `bson:"charisma_modifier"`
-	MaxCarryWeight       int                `bson:"maxcarryweight"`
-	HitDie               string             `bson:"hitdie"`
-	NumberOfHitdie       map[string]int     `bson:"numberofhitdie"`
-	HitPoints            int                `bson:"hitpoints"`
-	TempHitPoints        int                `bson:"temphitpoints"`
-	Initiative           Initiative         `bson:"initiative"`
-	ArmorClass           int                `bson:"armorclass"`
-	CanDoSpellCasting    bool               `bson:"candospellcasting"`
-	TypeOfSpellCasting   string             `bson:"typesofspellcasting"`
-	SavingThrows         []SavingThrow      `bson:"savingthrows"`
-	ProficiencyBonus     int                `bson:"proficiencybonus"`
-	Skills               []Skill            `bson:"skills"`
-	Class                map[string]int     `bson:"class"`
-	WeaponProficiencies  []string           `bson:"weaponproficiencies"`
-	ArmorProficiencies   []string           `bson:"armorproficiencies"`
+	ID                       primitive.ObjectID `bson:"_id,omitempty"`
+	Name                     string             `bson:"name"`
+	Strength                 int                `bson:"strength"`
+	Dexterity                int                `bson:"dexterity"`
+	Constitution             int                `bson:"constitution"`
+	Intelligence             int                `bson:"intelligence"`
+	Wisdom                   int                `bson:"wisdom"`
+	Charisma                 int                `bson:"charisma"`
+	StrengthModifier         int                `bson:"strength_modifier"`
+	DexterityModifier        int                `bson:"dexterity_modifier"`
+	ConstitutionModifier     int                `bson:"constitution_modifier"`
+	IntelligenceModifier     int                `bson:"intelligence_modifier"`
+	WisdomModifier           int                `bson:"wisdom_modifier"`
+	CharismaModifier         int                `bson:"charisma_modifier"`
+	MaxCarryWeight           int                `bson:"maxcarryweight"`
+	HitDie                   string             `bson:"hitdie"`
+	NumberOfHitdie           map[string]int     `bson:"numberofhitdie"`
+	HitPoints                int                `bson:"hitpoints"`
+	TempHitPoints            int                `bson:"temphitpoints"`
+	Initiative               Initiative         `bson:"initiative"`
+	ArmorClass               int                `bson:"armorclass"`
+	CanDoSpellCasting        bool               `bson:"candospellcasting"`
+	PreparedSpells           map[string]Spells  `bson:"preparedspell"`
+	TotalSpells              map[string]Spells  `bson:"totalspells"`
+	SpellSlots               map[string]int     `bson:"spellslots"`
+	DifficultyClass          map[string]int     `bson:"difficultyclass"`
+	DifficultyClassAttribute map[string]string  `bson:"difficultyclassattribute"`
+	SavingThrows             []SavingThrow      `bson:"savingthrows"`
+	ProficiencyBonus         int                `bson:"proficiencybonus"`
+	Skills                   []Skill            `bson:"skills"`
+	Class                    map[string]int     `bson:"class"`
+	SubClass                 map[string]string  `bson:"subclass"`
+	WeaponProficiencies      []string           `bson:"weaponproficiencies"`
+	ArmorProficiencies       []string           `bson:"armorproficiencies"`
+	ToolProficiencies        []string           `bson:"toolproficiencies"`
+	GenericItemInventory     []string           `bson:"genericiteminventory"`
+	ClassFeatures            []string           `json:"classfeatures"`
 }
 
 type SavingThrow struct {
@@ -319,8 +332,8 @@ func CalculateModifier(score int) int {
 }
 
 func CompareHitDie(existinghitdie, newhitdie string) string {
-	existingvalue := existinghitdie[2:]
-	newvalue := newhitdie[2:]
+	existingvalue := existinghitdie[1:]
+	newvalue := newhitdie[1:]
 
 	intexistingvalue, err1 := strconv.Atoi(existingvalue)
 	intnewvalue, err2 := strconv.Atoi(newvalue)
@@ -378,8 +391,42 @@ func (character *Character) SetProficiencyBonus() {
 	}
 }
 
-func (character *Character) GenericAttributeModifier(attribute string) {
+func (character *Character) GenericAttributeModifier(attribute string, value int) {
 	switch attribute {
 
 	}
+}
+
+func (character *Character) CalculateHitPoints(roll int) {
+	intdie := character.HitDie[1:]
+	die, err := strconv.Atoi(intdie)
+	if err != nil {
+		fmt.Println("Error converting string to int:", err)
+	}
+	level := character.FindHighestClassLevel()
+	if level == 1 {
+		character.HitPoints = character.ConstitutionModifier + die
+	} else {
+		character.HitPoints += roll
+	}
+}
+
+func (character *Character) AddToolProficiencies(toolproficiency string) {
+	var toolProficiency ToolProficiencies
+	filter := bson.M{"name": toolproficiency}
+	err := database.ToolProficiencies.FindOne(context.TODO(), filter).Decode(&toolProficiency)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			fmt.Println("No documents found with that name")
+		}
+		log.Fatal(err)
+	}
+	character.ToolProficiencies = append(character.ToolProficiencies, toolProficiency.Name)
+	for _, item := range toolProficiency.Items {
+		character.GenericItemInventory = append(character.GenericItemInventory, item.String())
+	}
+}
+
+func (character *Character) AddClassFeatures(classFeature string) {
+	character.ClassFeatures = append(character.ClassFeatures, classFeature)
 }
