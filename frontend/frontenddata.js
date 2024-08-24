@@ -1,4 +1,4 @@
-import SourceCreateImage from "../frontend/src/assets/sourcecreateimage.jpg"
+import SourceCreateImage from "../frontend/src/assets/sourcecreatecard.jpg"
 export const MainPageCards  = [
     {
         id : 1,

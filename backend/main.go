@@ -29,6 +29,7 @@ func main() {
 	backend := http.NewServeMux()
 	routes.HandleCharacterRoutes(backend)
 	routes.HandleComponentRoutes(backend)
+	routes.AccountRoutes(backend)
 
 	backend.HandleFunc("/", genericOk)
 	log.Fatal(http.ListenAndServe(":"+port, backend))
