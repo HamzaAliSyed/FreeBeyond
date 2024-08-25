@@ -35,6 +35,15 @@ func OnlyPost(response http.ResponseWriter, request *http.Request) error {
 	return nil
 }
 
+func OnlyGet(response http.ResponseWriter, request *http.Request) error {
+	if request.Method != http.MethodGet {
+		http.Error(response, "Only GET method allowed on the end point", http.StatusMethodNotAllowed)
+		return fmt.Errorf("method not allowd")
+	}
+
+	return nil
+}
+
 func GenerateJWT(Username string) (string, error) {
 	expirationTime := time.Now().Add(time.Hour * 255)
 

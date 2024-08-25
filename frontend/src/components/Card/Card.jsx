@@ -1,16 +1,15 @@
-import CardTitle from "./CardTitle"
-import CardDescription from "./CardDescription"
-import CardCoverPhoto from "./CardCoverPhoto"
-const Card = ({title, description,image}) => {
-return (
-    <div className="max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-        <div>
-            {<CardCoverPhoto coverphoto={image} />}
-            {<CardTitle title={title} />}
-            {<CardDescription description={description} />}
-        </div>
-    </div>
-)
-}
-
-export default Card
+const Card = ({ title, description, image, onClick }) => {
+    return (
+      <div 
+        className="p-4 border rounded shadow hover:bg-gray-100 cursor-pointer"
+        onClick={onClick}
+      >
+        <img src={image} alt={title} className="w-full h-auto" />
+        <h2 className="text-lg font-bold">{title}</h2>
+        <p>{description}</p>
+      </div>
+    );
+  };
+  
+  export default Card;
+  
