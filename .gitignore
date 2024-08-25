@@ -1,0 +1,45 @@
+# Ignore node_modules in the frontend
+/frontend/node_modules/
+/frontend/.next/
+/frontend/.cache/
+/frontend/build/
+/frontend/dist/
+/frontend/public/
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+/frontend/.DS_Store
+/frontend/.eslintcache
+/frontend/yarn.lock
+
+# Ignore logs in frontend
+/frontend/npm-debug.log*
+/frontend/yarn-error.log*
+/frontend/pnpm-debug.log*
+/frontend/.vercel
+/frontend/.netlify
+
+# Ignore Go build files and binaries in the backend
+/backend/bin/
+/backend/pkg/
+/backend/.env
+
+# Ignore editor directories and files
+*.swp
+*~
+.idea/
+/.vscode/
+/.history/
+/node_modules/
+/dist/
+/out/
+/build/
+/.DS_Store
+
+# Ignore OS-specific files
+Thumbs.db
+.DS_Store
+
+# Ignore coverage files
+/coverage
