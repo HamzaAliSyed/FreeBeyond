@@ -1,4 +1,10 @@
+import CCTabNameStats from "./pagespecificcomponents/cctabnamestats";
+
 const CreateCharacterPage = () => {
-  return <>CreateCharacter</>;
+  return (
+    <>
+      <CCTabNameStats />
+    </>
+  );
 };
 export default CreateCharacterPage;
