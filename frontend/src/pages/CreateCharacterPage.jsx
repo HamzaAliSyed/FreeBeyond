@@ -96,6 +96,8 @@ const CreateCharacterPage = () => {
             <tab.component
               data={newCharacterData[tab.id]}
               onDataChange={(newData) => handleTabDataChange(tab.id, newData)}
+              characterStatsState={characterStatsState}
+              characterStatsDispatcher={CharacterStatsDispatcher}
             />
           </div>
         ))}

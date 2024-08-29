@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-const CCTabNameStats = ({ data, onDataChange }) => {
+const CCTabNameStats = ({
+  data,
+  onDataChange,
+  characterStatsState,
+  characterStatsDispatcher,
+}) => {
   const stats = [
     "strength",
     "dexterity",
@@ -10,13 +15,59 @@ const CCTabNameStats = ({ data, onDataChange }) => {
     "charisma",
   ];
   const [rolledStats, setRolledStats] = useState([]);
-  const handleStatDrop = (e, stat) => {
+  const [abilityModifiers, setAbilityModifiers] = useState({});
+
+  const handleStatDrop = async (e, stat) => {
     e.preventDefault();
     const statId = e.dataTransfer.getData("text");
     const statObject = rolledStats.find((s) => s.id === statId);
     if (statObject) {
-      onDataChange({ [stat]: statObject.value });
-      setRolledStats((prevStats) => prevStats.filter((s) => s.id !== statId));
+      try {
+        // Update the stat in the parent component's state
+        characterStatsDispatcher({
+          type: "UPDATE_STAT",
+          payload: { stat, value: statObject.value },
+        });
+
+        // Update local state
+        onDataChange({ [stat]: statObject.value });
+
+        // Fetch the ability modifier
+        const response = await fetch(
+          "http://localhost:2712/api/components/getabilitymodifier",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ abilityscore: statObject.value }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Something wrong at the server");
+        }
+
+        const data = await response.json();
+
+        // Update the ability modifier
+        setAbilityModifiers((prevModifiers) => ({
+          ...prevModifiers,
+          [stat]: data.abilityscoremodifier,
+        }));
+
+        // Remove the used stat from rolledStats
+        setRolledStats((prevStats) => prevStats.filter((s) => s.id !== statId));
+
+        console.log(
+          `Updated ${stat} to ${statObject.value} with modifier ${data.abilityModifier}`
+        );
+      } catch (error) {
+        console.error(
+          "Error updating stat and fetching ability modifier:",
+          error
+        );
+      }
     }
   };
   const handleCharacterPortrait = (event) => {
@@ -59,6 +110,8 @@ const CCTabNameStats = ({ data, onDataChange }) => {
     setRolledStats(newStats);
   };
 
+  console.log("Current ability modifiers:", abilityModifiers);
+
   return (
     <div className="w-full h-[calc(100vh-48px)] bg-gray-200 rounded-md p-3">
       <h1 className="text-gray-800 text-center text-4xl mb-3">Name & Stats</h1>
@@ -80,7 +133,17 @@ const CCTabNameStats = ({ data, onDataChange }) => {
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => handleStatDrop(e, stat)}
                 >
-                  {data[stat] || ""}
+                  {characterStatsState[stat] || ""}
+                </div>
+                <div className="ml-2 w-8 h-8 border border-gray-400 rounded flex items-center justify-center">
+                  {abilityModifiers[stat] !== undefined ? (
+                    <>
+                      {abilityModifiers[stat] >= 0 ? "+" : ""}
+                      {abilityModifiers[stat]}
+                    </>
+                  ) : (
+                    ""
+                  )}
                 </div>
               </div>
             ))}
