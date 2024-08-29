@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useReducer, useState } from "react";
 import CCTabBackground from "./pagespecificcomponents/cctabbackground";
 import CCTabClass from "./pagespecificcomponents/cctabclass";
 import CCTabRace from "./pagespecificcomponents/cctabrace";
@@ -12,6 +12,39 @@ const CreateCharacterPage = () => {
     class: {},
   });
 
+  const initialStats = {
+    strength: 0,
+    dexterity: 0,
+    constitution: 0,
+    intelligence: 0,
+    wisdom: 0,
+    charisma: 0,
+  };
+
+  const characterStatsReducer = (state = initialStats, action) => {
+    switch (action.type) {
+      case "UPDATE_STAT":
+        return {
+          ...state,
+          [action.payload.stat]: action.payload.value,
+        };
+      default:
+        return state;
+    }
+  };
+
+  const updateStat = (stat, value) => {
+    return {
+      type: "UPDATE_STAT",
+      payload: { stat, value },
+    };
+  };
+
+  const [characterStatsState, CharacterStatsDispatcher] = useReducer(
+    characterStatsReducer,
+    initialStats
+  );
+
   const tabs = [
     { id: "namestats", label: "Name and Stats", component: CCTabNameStats },
     { id: "background", label: "Background", component: CCTabBackground },
@@ -21,6 +54,13 @@ const CreateCharacterPage = () => {
   const [activeTab, setActiveTab] = useState("namestats");
 
   const handleTabDataChange = (tabId, newData) => {
+    if (tabId === "namestats") {
+      Object.entries(newData).forEach(([key, value]) => {
+        if (initialStats.hasOwnProperty(key)) {
+          CharacterStatsDispatcher(updateStat(key, value));
+        }
+      });
+    }
     setNewCharacterData((prevData) => ({
       ...prevData,
       [tabId]: { ...prevData[tabId], ...newData },
@@ -29,7 +69,6 @@ const CreateCharacterPage = () => {
 
   const handleSubmit = () => {
     console.log("Submitting character data:", newCharacterData);
-    // Add your submission logic here
   };
 
   return (
