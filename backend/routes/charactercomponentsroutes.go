@@ -9,11 +9,14 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/getabilitymodifier", getAbilityModifier)
 	mux.HandleFunc("/api/components/createsource", handlecreatesource)
+	mux.HandleFunc("/api/components/getaddsources", getAllSources)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -103,4 +106,33 @@ func handlecreatesource(response http.ResponseWriter, request *http.Request) {
 	response.WriteHeader(http.StatusCreated)
 	response.Write([]byte("New Source Created"))
 
+}
+
+func getAllSources(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	methodError := utils.OnlyGet(response, request)
+
+	if methodError != nil {
+		http.Error(response, "Only Get Method allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cursor, cursorError := database.Sources.Find(context.TODO(), bson.M{})
+
+	if cursorError != nil {
+		http.Error(response, "Failed to fetch data", http.StatusInternalServerError)
+		return
+	}
+
+	var sourcesQuery []bson.M
+
+	if cursorQueryAllError := cursor.All(context.TODO(), &sourcesQuery); cursorQueryAllError != nil {
+		http.Error(response, "Failed to decode data", http.StatusInternalServerError)
+		return
+	}
+
+	defer cursor.Close(context.TODO())
+
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(sourcesQuery)
 }
