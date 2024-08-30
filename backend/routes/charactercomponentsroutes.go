@@ -11,12 +11,14 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/getabilitymodifier", getAbilityModifier)
 	mux.HandleFunc("/api/components/createsource", handlecreatesource)
-	mux.HandleFunc("/api/components/getaddsources", getAllSources)
+	mux.HandleFunc("/api/components/getallsources", getAllSources)
+	mux.HandleFunc("/api/components/getallsourcesnames", getAllSourcesNames)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -135,4 +137,45 @@ func getAllSources(response http.ResponseWriter, request *http.Request) {
 
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(sourcesQuery)
+}
+
+func getAllSourcesNames(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	methodError := utils.OnlyGet(response, request)
+
+	if methodError != nil {
+		http.Error(response, "Only Get Method allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cursor, cursorError := database.Sources.Find(context.TODO(), bson.M{}, options.Find().SetProjection(bson.M{"name": 1}))
+
+	if cursorError != nil {
+		http.Error(response, "Failed to fetch data", http.StatusInternalServerError)
+		return
+	}
+
+	defer cursor.Close(context.TODO())
+
+	var sourceNames []string
+
+	for cursor.Next(context.TODO()) {
+		var result struct {
+			Name string `bson:"name"`
+		}
+		if err := cursor.Decode(&result); err != nil {
+			http.Error(response, "Failed to decode data", http.StatusInternalServerError)
+			return
+		}
+		sourceNames = append(sourceNames, result.Name)
+	}
+
+	if err := cursor.Err(); err != nil {
+		http.Error(response, "Cursor error", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(sourceNames)
 }

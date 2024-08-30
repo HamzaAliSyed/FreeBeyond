@@ -14,10 +14,10 @@ var mongoClient *mongo.Client
 var Sources *mongo.Collection
 
 func ConnectToMongo() {
-	mongoClientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	MongoClientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 
 	var ConnectionToMongo error
-	mongoClient, ConnectionToMongo = mongo.Connect(context.TODO(), mongoClientOptions)
+	mongoClient, ConnectionToMongo = mongo.Connect(context.TODO(), MongoClientOptions)
 
 	if ConnectionToMongo != nil {
 		log.Fatal(ConnectionToMongo)
