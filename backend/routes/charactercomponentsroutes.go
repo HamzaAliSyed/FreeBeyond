@@ -1,14 +1,19 @@
 package routes
 
 import (
+	"backend/database"
+	"backend/models"
 	"backend/utils"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 )
 
 func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/getabilitymodifier", getAbilityModifier)
+	mux.HandleFunc("/api/components/createsource", handlecreatesource)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -52,5 +57,50 @@ func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
 	if responseWriteError != nil {
 		log.Println("Error writing response:", responseWriteError)
 	}
+
+}
+
+func handlecreatesource(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	methoderror := utils.OnlyPost(response, request)
+	if methoderror != nil {
+		http.Error(response, methoderror.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var SourceStruct struct {
+		Name        string `json:"name"`
+		Type        string `json:"type"`
+		PublishDate string `json:"publishdate"`
+	}
+
+	jsonParseError := json.NewDecoder(request.Body).Decode(&SourceStruct)
+
+	if jsonParseError != nil {
+		http.Error(response, "Unable to Parse JSON", http.StatusBadRequest)
+		return
+	}
+
+	publishDate, err := time.Parse("January-02-2006", SourceStruct.PublishDate)
+	if err != nil {
+		http.Error(response, "Invalid date format. Use 'Month-Day-Year' format.", http.StatusBadRequest)
+		return
+	}
+
+	newSource := models.Source{
+		Name:        SourceStruct.Name,
+		Type:        SourceStruct.Type,
+		PublishDate: publishDate,
+	}
+
+	_, sourceinserterror := database.Sources.InsertOne(context.TODO(), newSource)
+
+	if sourceinserterror != nil {
+		http.Error(response, "Error Inserting Source", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusCreated)
+	response.Write([]byte("New Source Created"))
 
 }
