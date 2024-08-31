@@ -1,6 +1,7 @@
 import MainPage from "./pages/MainPage";
 import CreateCharacterPage from "./pages/CreateCharacterPage";
 import CreateSource from "./pages/CreateSource";
+import CreateSpells from "./pages/CreateSpell";
 import CreateFeats from "./pages/CreateFeats";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 function App() {
@@ -11,6 +12,7 @@ function App() {
         <Route path="/create-character" element={<CreateCharacterPage />} />
         <Route path="/create-source" element={<CreateSource />} />
         <Route path="/create-feat" element={<CreateFeats />} />
+        <Route path="/create-spell" element={<CreateSpells />} />
       </Routes>
     </Router>
   );
