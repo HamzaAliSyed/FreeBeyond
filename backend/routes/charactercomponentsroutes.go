@@ -19,6 +19,7 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/createsource", handlecreatesource)
 	mux.HandleFunc("/api/components/getallsources", getAllSources)
 	mux.HandleFunc("/api/components/getallsourcesnames", getAllSourcesNames)
+	mux.HandleFunc("/api/components/addspells", handleAddSpells)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -178,4 +179,89 @@ func getAllSourcesNames(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(sourceNames)
+}
+
+func handleAddSpells(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	methodError := utils.OnlyPost(response, request)
+
+	if methodError != nil {
+		http.Error(response, "Only Post Method allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var SpellRequest struct {
+		Name          string            `json:"name"`
+		Level         int               `json:"level"`
+		CastingTime   string            `json:"castingtime"`
+		Duration      string            `json:"duration"`
+		School        string            `json:"school"`
+		Concentration bool              `json:"concentration"`
+		Range         string            `json:"range"`
+		Components    []string          `json:"componenets"`
+		FlavourText   string            `json:"flavourtext"`
+		Classes       string            `json:"classes"`
+		SubClasses    string            `json:"subclasses"`
+		Source        string            `json:"source"`
+		Type          string            `json:"type"`
+		AOEShape      string            `json:"aoeshape"`
+		AOERadius     int               `json:"aoeradius"`
+		SaveAttribute string            `json:"saveattribute"`
+		Damage        map[string]string `json:"damage"`
+		SaveEffect    string            `json:"saveeffect"`
+	}
+
+	jsonParseError := json.NewDecoder(request.Body).Decode(&SpellRequest)
+
+	if jsonParseError != nil {
+		http.Error(response, "Unable to Parse JSON", http.StatusBadRequest)
+		return
+	}
+
+	var spell interface{}
+
+	switch SpellRequest.Type {
+	case "AttackBasedRangeAOEAttack":
+		{
+			spell = models.AttackBasedRangeAOEAttack{
+				Spells: models.Spells{
+					Name:          SpellRequest.Name,
+					Level:         SpellRequest.Level,
+					CastingTime:   SpellRequest.CastingTime,
+					Duration:      SpellRequest.Duration,
+					School:        models.SchoolOfMagic(SpellRequest.School),
+					Concentration: SpellRequest.Concentration,
+					Range:         SpellRequest.Range,
+					Components:    SpellRequest.Components,
+					FlavourText:   SpellRequest.FlavourText,
+					Classes:       SpellRequest.Classes,
+					SubClasses:    SpellRequest.SubClasses,
+					SourceName:    SpellRequest.Source,
+				},
+				AOEShape:      SpellRequest.AOEShape,
+				AOERadius:     SpellRequest.AOERadius,
+				SaveAttribute: SpellRequest.SaveAttribute,
+				Damage:        SpellRequest.Damage,
+				SaveEffect:    SpellRequest.SaveEffect,
+			}
+		}
+	}
+
+	if spell == nil {
+		http.Error(response, "Unsupported spell type", http.StatusBadRequest)
+		return
+	}
+
+	insertResult, insertError := database.Spells.InsertOne(context.TODO(), spell)
+
+	if insertError != nil {
+		http.Error(response, "Failed to insert spell", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"message": "Spell added successfully",
+		"id":      insertResult.InsertedID,
+	})
 }
