@@ -14,6 +14,7 @@ var mongoClient *mongo.Client
 var Sources *mongo.Collection
 var Spells *mongo.Collection
 var Classes *mongo.Collection
+var Items *mongo.Collection
 
 func ConnectToMongo() {
 	MongoClientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -35,5 +36,6 @@ func ConnectToMongo() {
 	Sources = mongoClient.Database("DND").Collection("Sources")
 	Spells = mongoClient.Database("DND").Collection("Spells")
 	Classes = mongoClient.Database("DND").Collection("Classes")
+	Items = mongoClient.Database("DND").Collection("Items")
 
 }

@@ -1,14 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import CreateItemsPage from "../assets/createitemspage.jpg";
 
 const CreateItems = () => {
+  const navigate = useNavigate();
+
   const [name, setName] = useState("");
   const [typeTags, setTypeTags] = useState([]);
   const [itemType, setItemType] = useState("");
   const [requiresAttunement, setRequiresAttunement] = useState(false);
   const [cost, setCost] = useState("");
   const [weight, setWeight] = useState("");
+  const [flavourTexts, setFlavourTexts] = useState([
+    { heading: "", fluff: "" },
+  ]);
+
+  const [sources, setSources] = useState([]);
+  const [selectedSource, setSelectedSource] = useState("");
 
   const handleNameChange = (event) => {
     setName(event.target.value);
@@ -39,16 +48,77 @@ const CreateItems = () => {
     setWeight(event.target.value);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log("Form submitted", {
+
+    const itemData = {
       name,
       typeTags,
       itemType,
       requiresAttunement,
       cost,
       weight,
-    });
+      flavourText: flavourTexts.map((ft) => ({
+        text: `${ft.heading}\n${ft.fluff}`,
+      })),
+      source: selectedSource,
+    };
+
+    try {
+      const response = await fetch(
+        "http://localhost:2712/api/components/createitems",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(itemData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create item");
+      }
+
+      alert("Item created successfully!");
+      navigate("/");
+    } catch (error) {
+      console.error("Error creating item:", error);
+      alert("Failed to create item. Please try again.");
+    }
+  };
+
+  const addFlavourText = () => {
+    setFlavourTexts([...flavourTexts, { heading: "", fluff: "" }]);
+  };
+
+  const handleFlavourTextChange = (index, field, value) => {
+    const newFlavourTexts = [...flavourTexts];
+    newFlavourTexts[index][field] = value;
+    setFlavourTexts(newFlavourTexts);
+  };
+
+  const handleSourceChange = (event) => {
+    setSelectedSource(event.target.value);
+  };
+
+  useEffect(() => {
+    fetchSources();
+  }, []);
+
+  const fetchSources = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:2712/api/components/getallsourcesnames"
+      );
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const data = await response.json();
+      setSources(data);
+    } catch (error) {
+      console.error("Error fetching sources:", error);
+    }
   };
 
   return (
@@ -63,7 +133,7 @@ const CreateItems = () => {
       <div className="col-span-9 p-8 flex items-center justify-center">
         <div className="w-full max-w-2xl text-center">
           <h1 className="text-4xl font-bold mb-8">Create New D&D Item</h1>
-          <form className="w-full">
+          <form className="w-full" onSubmit={handleSubmit}>
             <div className="mb-6">
               <label
                 htmlFor="name"
@@ -200,6 +270,61 @@ const CreateItems = () => {
                 className="w-full text-lg p-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 placeholder="e.g. 2 lbs"
               />
+            </div>
+            <div className="mb-6">
+              <label className="block text-xl font-semibold text-gray-700 mb-2">
+                Flavour Text
+              </label>
+              {flavourTexts.map((flavourText, index) => (
+                <div key={index} className="mb-4">
+                  <input
+                    type="text"
+                    value={flavourText.heading}
+                    onChange={(e) =>
+                      handleFlavourTextChange(index, "heading", e.target.value)
+                    }
+                    className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    placeholder="Heading"
+                  />
+                  <textarea
+                    value={flavourText.fluff}
+                    onChange={(e) =>
+                      handleFlavourTextChange(index, "fluff", e.target.value)
+                    }
+                    className="w-full text-lg p-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    rows="3"
+                    placeholder="Fluff"
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addFlavourText}
+                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+              >
+                + Add Flavour Text
+              </button>
+            </div>
+            <div className="mb-6">
+              <label
+                htmlFor="source"
+                className="block text-xl font-semibold text-gray-700 mb-2"
+              >
+                Source
+              </label>
+              <select
+                id="source"
+                value={selectedSource}
+                onChange={handleSourceChange}
+                className="w-full text-lg p-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              >
+                <option value="">Select a Source</option>
+                {sources.map((sourceName, index) => (
+                  <option key={index} value={sourceName}>
+                    {sourceName}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="mt-8">
               <button

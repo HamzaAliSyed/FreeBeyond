@@ -23,6 +23,7 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/addspells", handleAddSpells)
 	mux.HandleFunc("/api/components/createclass", handleCreateClass)
 	mux.HandleFunc("/api/components/createsubclass", handleCreateSubClass)
+	mux.HandleFunc("/api/components/createitems", handleCreateNewItems)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -318,3 +319,75 @@ func handleCreateClass(response http.ResponseWriter, request *http.Request) {
 }
 
 func handleCreateSubClass(response http.ResponseWriter, request *http.Request) {}
+
+func handleCreateNewItems(response http.ResponseWriter, request *http.Request) {
+
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if err := utils.OnlyPost(response, request); err != nil {
+		http.Error(response, err.Error(), http.StatusMethodNotAllowed)
+		return
+	}
+
+	var ItemCreateRequest struct {
+		Name               string                    `json:"name"`
+		TypeTags           []string                  `json:"typeTags"`
+		ItemType           string                    `json:"itemType"`
+		RequiresAttunement bool                      `json:"requiresAttunement"`
+		Cost               string                    `json:"cost"`
+		Weight             string                    `json:"weight"`
+		FlavourText        []models.TextBasedAbility `json:"flavourText"`
+		Source             string                    `json:"source"`
+	}
+
+	jsonParseError := json.NewDecoder(request.Body).Decode(&ItemCreateRequest)
+	if jsonParseError != nil {
+		http.Error(response, "Unable to parse JSON", http.StatusBadRequest)
+		return
+	}
+
+	itemType := models.ItemType(ItemCreateRequest.ItemType)
+	if !utils.IsValidItemType(itemType) {
+		http.Error(response, "Invalid ItemType", http.StatusBadRequest)
+		return
+	}
+
+	sourceObjectID, err := utils.FindSourceObjectID(ItemCreateRequest.Source)
+	if err != nil {
+		http.Error(response, "Invalid Source", http.StatusBadRequest)
+		return
+	}
+
+	newItem := models.Items{
+		Name:               ItemCreateRequest.Name,
+		TypeTags:           ItemCreateRequest.TypeTags,
+		ItemType:           itemType,
+		RequiresAttunement: ItemCreateRequest.RequiresAttunement,
+		Cost:               ItemCreateRequest.Cost,
+		Weight:             ItemCreateRequest.Weight,
+		FlavourText:        ItemCreateRequest.FlavourText,
+		Source:             sourceObjectID,
+	}
+
+	insertResult, insertResultError := database.Items.InsertOne(context.TODO(), newItem)
+	if insertResultError != nil {
+		http.Error(response, "Error inserting item into database", http.StatusInternalServerError)
+		return
+	}
+
+	insertedID, ok := insertResult.InsertedID.(primitive.ObjectID)
+	if !ok {
+		http.Error(response, "Error retrieving inserted item ID", http.StatusInternalServerError)
+		return
+	}
+
+	responseItem := struct {
+		ID   primitive.ObjectID `json:"id"`
+		Name string             `json:"name"`
+	}{
+		ID:   insertedID,
+		Name: newItem.Name,
+	}
+
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(responseItem)
+}
