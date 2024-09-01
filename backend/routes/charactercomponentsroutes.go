@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -20,6 +21,8 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/getallsources", getAllSources)
 	mux.HandleFunc("/api/components/getallsourcesnames", getAllSourcesNames)
 	mux.HandleFunc("/api/components/addspells", handleAddSpells)
+	mux.HandleFunc("/api/components/createclass", handleCreateClass)
+	mux.HandleFunc("/api/components/createsubclass", handleCreateSubClass)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -265,3 +268,53 @@ func handleAddSpells(response http.ResponseWriter, request *http.Request) {
 		"id":      insertResult.InsertedID,
 	})
 }
+
+func handleCreateClass(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if err := utils.OnlyPost(response, request); err != nil {
+		http.Error(response, err.Error(), http.StatusMethodNotAllowed)
+		return
+	}
+
+	var ClassRequest struct {
+		Name                   string   `json:"name"`
+		HitDie                 string   `json:"hitdie"`
+		ArmorProficiency       []string `json:"armorProficiency"`
+		WeaponProficiency      []string `json:"weaponProficiency"`
+		ToolsProficiency       []string `json:"toolsProficiency"`
+		SavingThrowProficiency []string `json:"savingThrowProficiency"`
+		SkillsCanChoose        int      `json:"skillsCanChoose"`
+		SkillsChoiceList       []string `json:"skillsChoiceList"`
+	}
+
+	jsonParseError := json.NewDecoder(request.Body).Decode(&ClassRequest)
+
+	if jsonParseError != nil {
+		http.Error(response, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	newClass := models.Class{
+		Name:                   ClassRequest.Name,
+		HitDie:                 ClassRequest.HitDie,
+		ArmorProficiency:       ClassRequest.ArmorProficiency,
+		WeaponProficiency:      ClassRequest.WeaponProficiency,
+		ToolsProficiency:       ClassRequest.ToolsProficiency,
+		SavingThrowProficiency: ClassRequest.SavingThrowProficiency,
+		SkillsCanChoose:        ClassRequest.SkillsCanChoose,
+		SkillsChoiceList:       ClassRequest.SkillsChoiceList,
+	}
+
+	insertResult, insertResultError := database.Classes.InsertOne(context.TODO(), newClass)
+	if insertResultError != nil {
+		http.Error(response, "Error inserting class", http.StatusInternalServerError)
+		return
+	}
+
+	newClass.ID = insertResult.InsertedID.(primitive.ObjectID)
+
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(newClass)
+}
+
+func handleCreateSubClass(response http.ResponseWriter, request *http.Request) {}

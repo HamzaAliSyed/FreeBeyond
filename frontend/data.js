@@ -1,6 +1,8 @@
 import CreateSource from "../frontend/src/assets/createsourcecard.jpg"
 import CreateFeat from "../frontend/src/assets/createfeatscard.jpg"
 import CreateSpell from "../frontend/src/assets/createspellcard.jpg"
+import CreateClass from "../frontend/src/assets/createclasscard.jpg"
+import CreateItem from "../frontend/src/assets/createitemscard.jpg"
 
 export const MainPageData = [
     {
@@ -23,5 +25,19 @@ export const MainPageData = [
         name : "Create A Spell",
         description : "Leave your mark on the weave and empower yourself and others",
         link : "/create-spell"
+    },
+    {
+        id : 4,
+        image : CreateClass,
+        name : "Create A Class",
+        description : "Specialization is the core of getting things done. Create a speciality for our adventurers",
+        link : "/create-class"
+    },
+    {
+        id : 5,
+        image : CreateItem,
+        name : "Create A Item",
+        description : "Will the magic items that supplements your shortcoming or boost your strenghts.",
+        link : "/create-item"
     }
 ]
