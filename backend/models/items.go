@@ -28,3 +28,12 @@ type Items struct {
 	Spells             []Spells             `bson:"spells,omitempty"`
 	Source             primitive.ObjectID   `bson:"source"`
 }
+
+type ArtisianTools struct {
+	ID          primitive.ObjectID   `bson:"_id,omitempty"`
+	Name        string               `bson:"name"`
+	Description string               `bson:"description"`
+	Items       []primitive.ObjectID `bson:"items"`
+	FlavourText []TextBasedAbility   `bson:"flavortext"`
+	DCTable     map[string]int       `bson:"dctable"`
+}

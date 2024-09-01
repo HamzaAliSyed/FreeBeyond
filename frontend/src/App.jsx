@@ -5,6 +5,7 @@ import CreateSpells from "./pages/CreateSpell";
 import CreateFeats from "./pages/CreateFeats";
 import CreateClass from "./pages/CreateClass";
 import CreateItems from "./pages/CreateItem";
+import CreateArtisianTools from "./pages/CreateArtisianTools";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/create-spell" element={<CreateSpells />} />
         <Route path="/create-class" element={<CreateClass />} />
         <Route path="/create-item" element={<CreateItems />} />
+        <Route path="/create-artisiantools" element={<CreateArtisianTools />} />
       </Routes>
     </Router>
   );

@@ -13,7 +13,7 @@ const CreateItems = () => {
   const [cost, setCost] = useState("");
   const [weight, setWeight] = useState("");
   const [flavourTexts, setFlavourTexts] = useState([
-    { heading: "", fluff: "" },
+    { title: "", flavourtext: "" },
   ]);
 
   const [sources, setSources] = useState([]);
@@ -58,9 +58,7 @@ const CreateItems = () => {
       requiresAttunement,
       cost,
       weight,
-      flavourText: flavourTexts.map((ft) => ({
-        text: `${ft.heading}\n${ft.fluff}`,
-      })),
+      flavourText: flavourTexts,
       source: selectedSource,
     };
 
@@ -89,7 +87,7 @@ const CreateItems = () => {
   };
 
   const addFlavourText = () => {
-    setFlavourTexts([...flavourTexts, { heading: "", fluff: "" }]);
+    setFlavourTexts([...flavourTexts, { title: "", flavourtext: "" }]);
   };
 
   const handleFlavourTextChange = (index, field, value) => {
@@ -155,7 +153,7 @@ const CreateItems = () => {
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  "AdventuringGear",
+                  "Adventuring Gear",
                   "Ammunation",
                   "Trade Goods",
                   "Others",
@@ -254,7 +252,6 @@ const CreateItems = () => {
                 placeholder="e.g. 10 gp"
               />
             </div>
-
             <div className="mb-6">
               <label
                 htmlFor="weight"
@@ -279,21 +276,25 @@ const CreateItems = () => {
                 <div key={index} className="mb-4">
                   <input
                     type="text"
-                    value={flavourText.heading}
+                    value={flavourText.title}
                     onChange={(e) =>
-                      handleFlavourTextChange(index, "heading", e.target.value)
+                      handleFlavourTextChange(index, "title", e.target.value)
                     }
-                    className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                    placeholder="Heading"
+                    className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg"
+                    placeholder="Title"
                   />
                   <textarea
-                    value={flavourText.fluff}
+                    value={flavourText.flavourtext}
                     onChange={(e) =>
-                      handleFlavourTextChange(index, "fluff", e.target.value)
+                      handleFlavourTextChange(
+                        index,
+                        "flavourtext",
+                        e.target.value
+                      )
                     }
-                    className="w-full text-lg p-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    className="w-full text-lg p-2 border-2 border-gray-300 rounded-lg"
                     rows="3"
-                    placeholder="Fluff"
+                    placeholder="Flavour Text"
                   />
                 </div>
               ))}

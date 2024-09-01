@@ -30,3 +30,12 @@ func FindSourceObjectID(sourceName string) (primitive.ObjectID, error) {
 	}
 	return source.ID, nil
 }
+
+func FindItemObjectID(itemName string) (primitive.ObjectID, error) {
+	var item models.Items
+	err := database.Items.FindOne(context.TODO(), bson.M{"name": itemName}).Decode(&item)
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+	return item.ID, nil
+}

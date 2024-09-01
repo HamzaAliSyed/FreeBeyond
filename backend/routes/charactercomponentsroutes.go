@@ -6,6 +6,7 @@ import (
 	"backend/utils"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -24,6 +25,8 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/createclass", handleCreateClass)
 	mux.HandleFunc("/api/components/createsubclass", handleCreateSubClass)
 	mux.HandleFunc("/api/components/createitems", handleCreateNewItems)
+	mux.HandleFunc("/api/components/createartisiantools", handleCreateArtisianTools)
+	mux.HandleFunc("/api/components/getallitems", getAllItems)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -390,4 +393,97 @@ func handleCreateNewItems(response http.ResponseWriter, request *http.Request) {
 
 	response.WriteHeader(http.StatusCreated)
 	json.NewEncoder(response).Encode(responseItem)
+}
+
+func handleCreateArtisianTools(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if err := utils.OnlyPost(response, request); err != nil {
+		http.Error(response, err.Error(), http.StatusMethodNotAllowed)
+		return
+	}
+
+	var artisianToolsRequest struct {
+		Name        string                    `json:"name"`
+		Description string                    `json:"description"`
+		Items       []string                  `json:"items"`
+		FlavourText []models.TextBasedAbility `json:"flavourText"`
+		DCTable     map[string]int            `json:"dcTable"`
+	}
+
+	if err := json.NewDecoder(request.Body).Decode(&artisianToolsRequest); err != nil {
+		http.Error(response, "Unable to parse JSON", http.StatusBadRequest)
+		return
+	}
+
+	var itemIDs []primitive.ObjectID
+	for _, itemName := range artisianToolsRequest.Items {
+		id, err := utils.FindItemObjectID(itemName)
+		if err != nil {
+			http.Error(response, fmt.Sprintf("Invalid item: %s", itemName), http.StatusBadRequest)
+			return
+		}
+		itemIDs = append(itemIDs, id)
+	}
+
+	newArtisianTools := models.ArtisianTools{
+		Name:        artisianToolsRequest.Name,
+		Description: artisianToolsRequest.Description,
+		Items:       itemIDs,
+		FlavourText: artisianToolsRequest.FlavourText,
+		DCTable:     artisianToolsRequest.DCTable,
+	}
+
+	insertResult, err := database.ArtisianTools.InsertOne(context.TODO(), newArtisianTools)
+	if err != nil {
+		http.Error(response, "Error inserting artisian tools", http.StatusInternalServerError)
+		return
+	}
+
+	insertedID := insertResult.InsertedID.(primitive.ObjectID)
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"id":   insertedID,
+		"name": newArtisianTools.Name,
+	})
+}
+
+func getAllItems(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	methodError := utils.OnlyGet(response, request)
+
+	if methodError != nil {
+		http.Error(response, "Only GET method allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cursor, cursorError := database.Items.Find(context.TODO(), bson.M{}, options.Find().SetProjection(bson.M{"name": 1}))
+
+	if cursorError != nil {
+		http.Error(response, "Failed to fetch data", http.StatusInternalServerError)
+		return
+	}
+
+	defer cursor.Close(context.TODO())
+
+	var itemNames []string
+
+	for cursor.Next(context.TODO()) {
+		var result struct {
+			Name string `bson:"name"`
+		}
+		if cursorError := cursor.Decode(&result); cursorError != nil {
+			http.Error(response, "Failed to decode data", http.StatusInternalServerError)
+			return
+		}
+		itemNames = append(itemNames, result.Name)
+	}
+
+	if internalServerError := cursor.Err(); internalServerError != nil {
+		http.Error(response, "Cursor error", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(itemNames)
 }

@@ -3,6 +3,7 @@ import CreateFeat from "../frontend/src/assets/createfeatscard.jpg"
 import CreateSpell from "../frontend/src/assets/createspellcard.jpg"
 import CreateClass from "../frontend/src/assets/createclasscard.jpg"
 import CreateItem from "../frontend/src/assets/createitemscard.jpg"
+import CreateArtisianTool from "../frontend/src/assets/createartisiantoolscard.jpg"
 
 export const MainPageData = [
     {
@@ -39,5 +40,12 @@ export const MainPageData = [
         name : "Create A Item",
         description : "Will the magic items that supplements your shortcoming or boost your strenghts.",
         link : "/create-item"
+    },
+    {
+        id : 6,
+        image : CreateArtisianTool,
+        name : "Create Artisian Tool",
+        description : "Professional on the job with their customized toolkit",
+        link : "/create-artisiantools"
     }
 ]
