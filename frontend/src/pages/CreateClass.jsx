@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ClassPage from "../assets/createclasspage.jpg";
 import { useNavigate } from "react-router-dom";
 
@@ -11,6 +11,10 @@ const CreateClass = () => {
   const [savingThrowProficiency, setSavingThrowProficiency] = useState([]);
   const [skillsCanChoose, setSkillsCanChoose] = useState(0);
   const [skillsChoiceList, setSkillsChoiceList] = useState([]);
+  const [toolProficiencies, setToolProficiencies] = useState([]);
+  const [availableTools, setAvailableTools] = useState([]);
+  const [source, setSource] = useState("");
+  const [availableSources, setAvailableSources] = useState([]);
 
   const hitDieOptions = ["d4", "d6", "d8", "d10", "d12", "d20"];
 
@@ -75,6 +79,8 @@ const CreateClass = () => {
       savingThrowProficiency,
       skillsCanChoose,
       skillsChoiceList,
+      toolProficiencies,
+      source,
     };
 
     try {
@@ -99,6 +105,56 @@ const CreateClass = () => {
       console.error("Error creating class:", error);
       alert("Failed to create class");
     }
+  };
+
+  const fetchAvailableTools = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:2712/api/components/getallartisiantools"
+      );
+      if (response.ok) {
+        const tools = await response.json();
+        setAvailableTools(tools);
+      } else {
+        throw new Error("Failed to fetch artisian tools");
+      }
+    } catch (error) {
+      console.error("Error fetching artisian tools:", error);
+    }
+  };
+
+  const handleToolProficiencyChange = (event) => {
+    const { value, checked } = event.target;
+    if (checked) {
+      setToolProficiencies([...toolProficiencies, value]);
+    } else {
+      setToolProficiencies(toolProficiencies.filter((tool) => tool !== value));
+    }
+  };
+
+  const fetchAvailableSources = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:2712/api/components/getallsourcesnames"
+      );
+      if (response.ok) {
+        const sources = await response.json();
+        setAvailableSources(sources);
+      } else {
+        throw new Error("Failed to fetch sources");
+      }
+    } catch (error) {
+      console.error("Error fetching sources:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableTools();
+    fetchAvailableSources();
+  }, []);
+
+  const handleSourceChange = (event) => {
+    setSource(event.target.value);
   };
 
   return (
@@ -262,6 +318,46 @@ const CreateClass = () => {
                 </label>
               ))}
             </div>
+          </div>
+          <div className="mb-8">
+            <label className="block text-3xl font-semibold text-gray-800 mb-4">
+              Tool Proficiencies
+            </label>
+            <div className="flex flex-wrap gap-4">
+              {availableTools.map((tool) => (
+                <label key={tool} className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    value={tool}
+                    checked={toolProficiencies.includes(tool)}
+                    onChange={handleToolProficiencyChange}
+                    className="form-checkbox h-5 w-5 text-indigo-600"
+                  />
+                  <span className="ml-2 text-xl">{tool}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="mb-8">
+            <label
+              htmlFor="source"
+              className="block text-3xl font-semibold text-gray-800 mb-4"
+            >
+              Source
+            </label>
+            <select
+              id="source"
+              value={source}
+              onChange={handleSourceChange}
+              className="w-full text-2xl p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            >
+              <option value="">Select Source</option>
+              {availableSources.map((src) => (
+                <option key={src} value={src}>
+                  {src}
+                </option>
+              ))}
+            </select>
           </div>
           <button
             type="submit"

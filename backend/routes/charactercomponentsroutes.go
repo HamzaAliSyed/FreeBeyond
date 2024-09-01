@@ -27,6 +27,7 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/createitems", handleCreateNewItems)
 	mux.HandleFunc("/api/components/createartisiantools", handleCreateArtisianTools)
 	mux.HandleFunc("/api/components/getallitems", getAllItems)
+	mux.HandleFunc("/api/components/getallartisiantools", getAllArtisianTools)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -289,12 +290,30 @@ func handleCreateClass(response http.ResponseWriter, request *http.Request) {
 		SavingThrowProficiency []string `json:"savingThrowProficiency"`
 		SkillsCanChoose        int      `json:"skillsCanChoose"`
 		SkillsChoiceList       []string `json:"skillsChoiceList"`
+		ToolProficiencies      []string `json:"toolProficiencies"`
+		Source                 string   `json:"source"`
 	}
 
 	jsonParseError := json.NewDecoder(request.Body).Decode(&ClassRequest)
 
 	if jsonParseError != nil {
 		http.Error(response, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	toolProficiencyIDs := make([]primitive.ObjectID, 0)
+	for _, toolName := range ClassRequest.ToolProficiencies {
+		id, err := utils.FindToolObjectID(toolName)
+		if err != nil {
+			http.Error(response, fmt.Sprintf("Invalid tool: %s", toolName), http.StatusBadRequest)
+			return
+		}
+		toolProficiencyIDs = append(toolProficiencyIDs, id)
+	}
+
+	sourceID, err := utils.FindSourceObjectID(ClassRequest.Source)
+	if err != nil {
+		http.Error(response, fmt.Sprintf("Invalid source: %s", ClassRequest.Source), http.StatusBadRequest)
 		return
 	}
 
@@ -307,6 +326,8 @@ func handleCreateClass(response http.ResponseWriter, request *http.Request) {
 		SavingThrowProficiency: ClassRequest.SavingThrowProficiency,
 		SkillsCanChoose:        ClassRequest.SkillsCanChoose,
 		SkillsChoiceList:       ClassRequest.SkillsChoiceList,
+		ToolProficiencies:      toolProficiencyIDs,
+		Source:                 sourceID,
 	}
 
 	insertResult, insertResultError := database.Classes.InsertOne(context.TODO(), newClass)
@@ -486,4 +507,45 @@ func getAllItems(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(itemNames)
+}
+
+func getAllArtisianTools(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	methodError := utils.OnlyGet(response, request)
+
+	if methodError != nil {
+		http.Error(response, "Only GET method allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cursor, cursorError := database.ArtisianTools.Find(context.TODO(), bson.M{}, options.Find().SetProjection(bson.M{"name": 1}))
+
+	if cursorError != nil {
+		http.Error(response, "Failed to fetch data", http.StatusInternalServerError)
+		return
+	}
+
+	defer cursor.Close(context.TODO())
+
+	var toolNames []string
+
+	for cursor.Next(context.TODO()) {
+		var result struct {
+			Name string `bson:"name"`
+		}
+		if cursorError := cursor.Decode(&result); cursorError != nil {
+			http.Error(response, "Failed to decode data", http.StatusInternalServerError)
+			return
+		}
+		toolNames = append(toolNames, result.Name)
+	}
+
+	if internalServerError := cursor.Err(); internalServerError != nil {
+		http.Error(response, "Cursor error", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(toolNames)
 }

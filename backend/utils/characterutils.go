@@ -4,9 +4,11 @@ import (
 	"backend/database"
 	"backend/models"
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func IsValidItemType(itemType models.ItemType) bool {
@@ -38,4 +40,20 @@ func FindItemObjectID(itemName string) (primitive.ObjectID, error) {
 		return primitive.NilObjectID, err
 	}
 	return item.ID, nil
+}
+
+func FindToolObjectID(toolName string) (primitive.ObjectID, error) {
+	var tool struct {
+		ID primitive.ObjectID `bson:"_id"`
+	}
+
+	err := database.ArtisianTools.FindOne(context.TODO(), bson.M{"name": toolName}).Decode(&tool)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return primitive.NilObjectID, fmt.Errorf("tool not found: %s", toolName)
+		}
+		return primitive.NilObjectID, err
+	}
+
+	return tool.ID, nil
 }

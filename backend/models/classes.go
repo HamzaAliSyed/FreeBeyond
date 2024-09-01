@@ -66,19 +66,22 @@ type SubClasses struct {
 	Name        string             `bson:"name"`
 	ParentClass primitive.ObjectID `bson:"parentclass"`
 	Levels      []Levels           `bson:"levels"`
+	Source      primitive.ObjectID `bson:"source"`
 }
 
 type Class struct {
-	ID                     primitive.ObjectID `bson:"_id,omitempty"`
-	Name                   string             `bson:"name"`
-	HitDie                 string             `bson:"hitdie"`
-	ArmorProficiency       []string           `bson:"armorproficiency"`
-	WeaponProficiency      []string           `bson:"weaponproficiency"`
-	ToolsProficiency       []string           `bson:"toolsproficiency"`
-	SavingThrowProficiency []string           `bson:"savingthrowproficiency"`
-	SkillsCanChoose        int                `bson:"skillscanchoose"`
-	SkillsChoiceList       []string           `bson:"skills"`
-	Levels                 []Levels           `bson:"levels"`
-	SubClasses             []SubClasses       `bson:"subclasses"`
-	SubClassChoices        []int              `bson:"subclasschoices"`
+	ID                     primitive.ObjectID   `bson:"_id,omitempty"`
+	Name                   string               `bson:"name"`
+	HitDie                 string               `bson:"hitdie"`
+	ArmorProficiency       []string             `bson:"armorproficiency"`
+	WeaponProficiency      []string             `bson:"weaponproficiency"`
+	ToolsProficiency       []string             `bson:"toolsproficiency"`
+	SavingThrowProficiency []string             `bson:"savingthrowproficiency"`
+	SkillsCanChoose        int                  `bson:"skillscanchoose"`
+	SkillsChoiceList       []string             `bson:"skills"`
+	ToolProficiencies      []primitive.ObjectID `bson:"toolproficiencies"`
+	Levels                 []Levels             `bson:"levels"`
+	SubClasses             []SubClasses         `bson:"subclasses"`
+	SubClassChoices        []int                `bson:"subclasschoices"`
+	Source                 primitive.ObjectID   `bson:"source"`
 }
