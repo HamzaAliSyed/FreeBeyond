@@ -29,6 +29,7 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/getallitems", getAllItems)
 	mux.HandleFunc("/api/components/getallartisiantools", getAllArtisianTools)
 	mux.HandleFunc("/api/components/getallclasses", getAllClasses)
+	mux.HandleFunc("/api/components/getallsubclasses", getAllSubClasses)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -678,4 +679,46 @@ func getAllClasses(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(&classNames)
+}
+
+func getAllSubClasses(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	methodError := utils.OnlyGet(response, request)
+	if methodError != nil {
+		http.Error(response, "Only GET method allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cursor, cursorError := database.SubClasses.Find(context.TODO(), bson.M{}, options.Find().SetProjection(bson.M{"name": 1}))
+
+	if cursorError != nil {
+		http.Error(response, "Failed to fetch data", http.StatusInternalServerError)
+		return
+	}
+
+	defer cursor.Close(context.TODO())
+
+	var subClassNames []string
+
+	for cursor.Next(context.TODO()) {
+		var subClass struct {
+			Name string `bson:"name"`
+		}
+
+		if cursorError := cursor.Decode(&subClass); cursorError != nil {
+			http.Error(response, "Failed to decode data", http.StatusInternalServerError)
+			return
+		}
+
+		subClassNames = append(subClassNames, subClass.Name)
+	}
+
+	if internalServerError := cursor.Err(); internalServerError != nil {
+		http.Error(response, "Cursor error", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(&subClassNames)
 }
