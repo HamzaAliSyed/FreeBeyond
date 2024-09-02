@@ -57,3 +57,20 @@ func FindToolObjectID(toolName string) (primitive.ObjectID, error) {
 
 	return tool.ID, nil
 }
+
+func FindClassObjectID(className string) (primitive.ObjectID, error) {
+	var class struct {
+		ID primitive.ObjectID `bson:"_id"`
+	}
+
+	err := database.Classes.FindOne(context.TODO(), bson.M{"name": className}).Decode(&class)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return primitive.NilObjectID, fmt.Errorf("class not found: %s", className)
+		}
+		return primitive.NilObjectID, err
+	}
+
+	return class.ID, nil
+
+}

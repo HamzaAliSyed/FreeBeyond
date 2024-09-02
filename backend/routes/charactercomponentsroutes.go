@@ -28,6 +28,7 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/createartisiantools", handleCreateArtisianTools)
 	mux.HandleFunc("/api/components/getallitems", getAllItems)
 	mux.HandleFunc("/api/components/getallartisiantools", getAllArtisianTools)
+	mux.HandleFunc("/api/components/getallclasses", getAllClasses)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -328,6 +329,7 @@ func handleCreateClass(response http.ResponseWriter, request *http.Request) {
 		SkillsChoiceList:       ClassRequest.SkillsChoiceList,
 		ToolProficiencies:      toolProficiencyIDs,
 		Source:                 sourceID,
+		SubClasses:             []primitive.ObjectID{},
 	}
 
 	insertResult, insertResultError := database.Classes.InsertOne(context.TODO(), newClass)
@@ -342,7 +344,93 @@ func handleCreateClass(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(newClass)
 }
 
-func handleCreateSubClass(response http.ResponseWriter, request *http.Request) {}
+func handleCreateSubClass(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if err := utils.OnlyPost(response, request); err != nil {
+		http.Error(response, err.Error(), http.StatusMethodNotAllowed)
+		return
+	}
+
+	var SubClassRequest struct {
+		Name        string `json:"name"`
+		ParentClass string `json:"parentclass"`
+		Source      string `json:"source"`
+	}
+
+	if err := json.NewDecoder(request.Body).Decode(&SubClassRequest); err != nil {
+		http.Error(response, "Unable to parse JSON", http.StatusBadRequest)
+		return
+	}
+
+	parentClassID, err := utils.FindClassObjectID(SubClassRequest.ParentClass)
+	if err != nil {
+		http.Error(response, fmt.Sprintf("Invalid parent class: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	sourceID, err := utils.FindSourceObjectID(SubClassRequest.Source)
+	if err != nil {
+		http.Error(response, fmt.Sprintf("Invalid source: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	var parentClass models.Class
+	err = database.Classes.FindOne(context.TODO(), bson.M{"_id": parentClassID}).Decode(&parentClass)
+	if err != nil {
+		log.Printf("Error fetching parent class: %v", err)
+		http.Error(response, "Error fetching parent class", http.StatusInternalServerError)
+		return
+	}
+
+	newSubClass := models.SubClasses{
+		Name:        SubClassRequest.Name,
+		ParentClass: parentClassID,
+		Source:      sourceID,
+	}
+
+	insertResult, err := database.SubClasses.InsertOne(context.TODO(), newSubClass)
+	if err != nil {
+		log.Printf("Error inserting subclass: %v", err)
+		http.Error(response, "Error inserting subclass", http.StatusInternalServerError)
+		return
+	}
+
+	newSubClassID := insertResult.InsertedID.(primitive.ObjectID)
+
+	if parentClass.SubClasses == nil {
+		parentClass.SubClasses = []primitive.ObjectID{}
+	}
+
+	parentClass.SubClasses = append(parentClass.SubClasses, newSubClassID)
+
+	updateResult, err := database.Classes.UpdateOne(
+		context.TODO(),
+		bson.M{"_id": parentClassID},
+		bson.M{"$set": bson.M{"subclasses": parentClass.SubClasses}},
+	)
+
+	if err != nil {
+		log.Printf("Error updating parent class: %v", err)
+		http.Error(response, fmt.Sprintf("Error updating parent class: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if updateResult.MatchedCount == 0 {
+		log.Printf("No matching document found for parent class ID: %v", parentClassID)
+		http.Error(response, "Parent class not found", http.StatusNotFound)
+		return
+	}
+
+	if updateResult.ModifiedCount == 0 {
+		log.Printf("Document matched but not modified. This might happen if the subclass was already in the array.")
+	}
+
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"message": "Subclass created successfully",
+		"id":      newSubClassID,
+	})
+}
 
 func handleCreateNewItems(response http.ResponseWriter, request *http.Request) {
 
@@ -548,4 +636,46 @@ func getAllArtisianTools(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(toolNames)
+}
+
+func getAllClasses(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	methodError := utils.OnlyGet(response, request)
+	if methodError != nil {
+		http.Error(response, "Only GET method allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cursor, cursorError := database.Classes.Find(context.TODO(), bson.M{}, options.Find().SetProjection(bson.M{"name": 1}))
+
+	if cursorError != nil {
+		http.Error(response, "Failed to fetch data", http.StatusInternalServerError)
+		return
+	}
+
+	defer cursor.Close(context.TODO())
+
+	var classNames []string
+
+	for cursor.Next(context.TODO()) {
+		var class struct {
+			Name string `bson:"name"`
+		}
+
+		if cursorError := cursor.Decode(&class); cursorError != nil {
+			http.Error(response, "Failed to decode data", http.StatusInternalServerError)
+			return
+		}
+
+		classNames = append(classNames, class.Name)
+	}
+
+	if internalServerError := cursor.Err(); internalServerError != nil {
+		http.Error(response, "Cursor error", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(&classNames)
 }
