@@ -5,6 +5,7 @@ import (
 	"backend/models"
 	"backend/utils"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -30,6 +31,7 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/getallartisiantools", getAllArtisianTools)
 	mux.HandleFunc("/api/components/getallclasses", getAllClasses)
 	mux.HandleFunc("/api/components/getallsubclasses", getAllSubClasses)
+	mux.HandleFunc("/api/components/createrace", handleCreateRace)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -733,4 +735,77 @@ func getAllSubClasses(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(&subClassNames)
+}
+
+func handleCreateRace(response http.ResponseWriter, request *http.Request) {
+
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if err := utils.OnlyPost(response, request); err != nil {
+		http.Error(response, err.Error(), http.StatusMethodNotAllowed)
+		return
+	}
+
+	var RaceRequest struct {
+		Name          string                    `json:"name"`
+		AbilityScores map[string]int            `json:"abilityscores"`
+		Size          string                    `json:"size"`
+		Speed         map[string]int            `json:"speed"`
+		CreatureType  string                    `json:"creaturetype"`
+		FlavourText   []models.TextBasedAbility `json:"flavourtext"`
+		Spells        map[string]int            `json:"spells"`
+		Attacks       []models.Attack           `json:"attacks"`
+		OtherBoost    map[string]string         `json:"otherboost"`
+		AgeRange      []int                     `json:"agerange"`
+		Languages     []string                  `json:"languages"`
+		Image         string                    `json:"image"`
+		Source        string                    `json:"source"`
+	}
+
+	jsonParseError := json.NewDecoder(request.Body).Decode(&RaceRequest)
+
+	if jsonParseError != nil {
+		http.Error(response, jsonParseError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	strippedstring := utils.StripBase64Prefix(RaceRequest.Image)
+
+	raceImageDate, encodingError := base64.StdEncoding.DecodeString(strippedstring)
+	if encodingError != nil {
+		http.Error(response, "Invalid image data", http.StatusBadRequest)
+		return
+	}
+
+	sourceObjectId, sourceFindError := utils.FindSourceObjectID(RaceRequest.Source)
+	if sourceFindError != nil {
+		http.Error(response, "Invalid Source", http.StatusBadRequest)
+		return
+	}
+
+	race := models.Race{
+		Name:          RaceRequest.Name,
+		AbilityScores: RaceRequest.AbilityScores,
+		Size:          RaceRequest.Size,
+		Speed:         RaceRequest.Speed,
+		CreatureType:  RaceRequest.CreatureType,
+		FlavourText:   RaceRequest.FlavourText,
+		Spells:        RaceRequest.Spells,
+		Attacks:       RaceRequest.Attacks,
+		OtherBoost:    RaceRequest.OtherBoost,
+		AgeRange:      RaceRequest.AgeRange,
+		Languages:     RaceRequest.Languages,
+		Image:         primitive.Binary{Data: raceImageDate},
+		Source:        sourceObjectId,
+	}
+
+	_, insertResultError := database.Races.InsertOne(context.TODO(), race)
+	if insertResultError != nil {
+		http.Error(response, "Failed to create race", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(race)
+
 }

@@ -18,6 +18,8 @@ type Character struct {
 	CharacterImage   primitive.Binary   `bson:"characterimage"`
 	Movements        Movement           `bson:"movement"`
 	Health           Health             `bson:"health"`
+	Attacks          []Attack           `bson:"attacks"`
+	Languages        []string           `bson:"langugaes"`
 }
 
 type AbilityScore struct {
@@ -47,4 +49,11 @@ type SavingThrow struct {
 	HasAdvantage          bool    `bson:"hasadvantage"`
 	HasDisadvantage       bool    `bson:"hasdisadvantage"`
 	Value                 int     `bson:"value"`
+}
+
+type Attack struct {
+	AttackName string            `bson:"attackname"`
+	Attribute  string            `bson:"attribute"`
+	Damage     map[string]string `bson:"damage"`
+	Range      int               `bson:"range"`
 }

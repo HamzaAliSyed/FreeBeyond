@@ -7,6 +7,7 @@ import CreateClass from "./pages/CreateClass";
 import CreateItems from "./pages/CreateItem";
 import CreateArtisianTools from "./pages/CreateArtisianTools";
 import CreateSubClass from "./pages/CreateSubClass";
+import CreateRace from "./pages/CreateRace";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/create-item" element={<CreateItems />} />
         <Route path="/create-artisiantools" element={<CreateArtisianTools />} />
         <Route path="/create-subclass" element={<CreateSubClass />} />
+        <Route path="/create-race" element={<CreateRace />} />
       </Routes>
     </Router>
   );

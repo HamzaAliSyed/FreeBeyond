@@ -6,7 +6,8 @@ import CreateItem from "../frontend/src/assets/createitemscard.jpg"
 import CreateArtisianTool from "../frontend/src/assets/createartisiantoolscard.jpg"
 import CreateSubClass from "../frontend/src/assets/createsubclasscard.jpg"
 import CreateCharacter from "../frontend/src/assets/createcharactercard.png"
-import LevelUp from "frontend/src/assets/levelupcard.jpg"
+import LevelUp from "../frontend/src/assets/levelupcard.jpg"
+import CreateRace from "../frontend/src/assets/createracecard.jpg"
 
 export const MainPageData = [
     {
@@ -71,5 +72,12 @@ export const MainPageData = [
         name : "Add a Level",
         description : "You are becoming better, strong, fast and sharper.",
         link : "/add-level"
+    },
+    {
+        id : 10,
+        image : CreateRace,
+        name : "Create Race",
+        description : "Blood is a unique liquid, its magical, gross and disgusting but you dont have to loose any of it",
+        link : "/create-race"
     }
 ]
