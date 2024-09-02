@@ -11,6 +11,7 @@ import (
 )
 
 var MongoClient *mongo.Client
+var Characters *mongo.Collection
 var Sources *mongo.Collection
 var Spells *mongo.Collection
 var Classes *mongo.Collection
@@ -41,4 +42,5 @@ func ConnectToMongo() {
 	Items = MongoClient.Database("DND").Collection("Items")
 	ArtisianTools = MongoClient.Database("DND").Collection("ArtisianTools")
 	SubClasses = MongoClient.Database("DND").Collection("SubClasses")
+	Characters = MongoClient.Database("DND").Collection("Characters")
 }

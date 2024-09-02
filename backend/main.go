@@ -28,5 +28,6 @@ func main() {
 	log.Println("Database migrations completed successfully")
 	backend := http.NewServeMux()
 	routes.HandleComponentRoutes(backend)
+	routes.HandleCharacterRoutes(backend)
 	log.Fatal(http.ListenAndServe(":"+port, backend))
 }

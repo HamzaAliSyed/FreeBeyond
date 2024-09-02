@@ -5,6 +5,8 @@ import CreateClass from "../frontend/src/assets/createclasscard.jpg"
 import CreateItem from "../frontend/src/assets/createitemscard.jpg"
 import CreateArtisianTool from "../frontend/src/assets/createartisiantoolscard.jpg"
 import CreateSubClass from "../frontend/src/assets/createsubclasscard.jpg"
+import CreateCharacter from "../frontend/src/assets/createcharactercard.png"
+import LevelUp from "frontend/src/assets/levelupcard.jpg"
 
 export const MainPageData = [
     {
@@ -55,5 +57,19 @@ export const MainPageData = [
         name : "Create a SubClass",
         description : "Specialization is the flavour of the game, adding the flavor to the professionalism.",
         link : "/create-subclass"
+    },
+    {
+        id : 8,
+        image : CreateCharacter,
+        name : "Create Character",
+        description : "Dive into the rich world with the new characters of your making",
+        link : "/create-character"
+    },
+    {
+        id : 9,
+        image : LevelUp,
+        name : "Add a Level",
+        description : "You are becoming better, strong, fast and sharper.",
+        link : "/add-level"
     }
 ]

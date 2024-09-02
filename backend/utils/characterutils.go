@@ -5,6 +5,7 @@ import (
 	"backend/models"
 	"context"
 	"fmt"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -87,4 +88,29 @@ func ConvertNamesToObjectIDs(collection *mongo.Collection, names []string) ([]pr
 		ids = append(ids, result.ID)
 	}
 	return ids, nil
+}
+
+func StripBase64Prefix(input string) string {
+	commaIndex := strings.Index(input, ",")
+	if commaIndex != -1 {
+		return input[commaIndex+1:]
+	}
+	return input
+}
+
+func GenerateSavingThrows(abilityScores []models.AbilityScore, profBonus int) []models.SavingThrow {
+	savingThrows := make([]models.SavingThrow, 0)
+
+	for _, ability := range abilityScores {
+		savingThrow := models.SavingThrow{
+			Ability:               ability.AbilityName,
+			NumberOfProficiencies: 0, // Default to 0
+			HasAdvantage:          false,
+			HasDisadvantage:       false,
+			Value:                 ability.AbilityModifier,
+		}
+		savingThrows = append(savingThrows, savingThrow)
+	}
+
+	return savingThrows
 }
