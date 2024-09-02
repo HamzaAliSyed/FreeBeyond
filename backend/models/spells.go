@@ -16,20 +16,20 @@ const (
 )
 
 type Spells struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty"`
-	Name          string             `bson:"name"`
-	Level         int                `bson:"level"`
-	CastingTime   string             `bson:"castingtime"`
-	Duration      string             `bson:"duration"`
-	School        SchoolOfMagic      `bson:"school"`
-	Concentration bool               `bson:"concentration"`
-	Range         string             `bson:"range"`
-	Components    []string           `bson:"components"`
-	FlavourText   string             `bson:"flavourtext"`
-	Classes       string             `bson:"classes"`
-	SubClasses    string             `bson:"subclasses"`
-	Source        primitive.ObjectID `bson:"source"`
-	SourceName    string             `bson:"sourcename"`
+	ID            primitive.ObjectID   `bson:"_id,omitempty"`
+	Name          string               `bson:"name"`
+	Level         int                  `bson:"level"`
+	CastingTime   string               `bson:"castingtime"`
+	Duration      string               `bson:"duration"`
+	School        SchoolOfMagic        `bson:"school"`
+	Concentration bool                 `bson:"concentration"`
+	Range         string               `bson:"range"`
+	Components    []string             `bson:"components"`
+	FlavourText   string               `bson:"flavourtext"`
+	Classes       []primitive.ObjectID `bson:"classes"`
+	SubClasses    []primitive.ObjectID `bson:"subclasses"`
+	Source        primitive.ObjectID   `bson:"source"`
+	SourceName    string               `bson:"sourcename"`
 }
 
 type AttackBasedRangeAOEAttack struct {

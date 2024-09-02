@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import CreateSpell from "../assets/createspellpage.jpg";
 
 const CreateSpells = () => {
@@ -13,8 +14,8 @@ const CreateSpells = () => {
   const [range, setRange] = useState("");
   const [components, setComponents] = useState([]);
   const [flavorText, setFlavorText] = useState("");
-  const [classes, setClasses] = useState("");
-  const [subclasses, setSubclasses] = useState("");
+  const [classes, setClasses] = useState([]);
+  const [subclasses, setSubclasses] = useState([]);
   const [sources, setSources] = useState([]);
   const [selectedSource, setSelectedSource] = useState("");
   const [isRangeBasedAOE, setIsRangeBasedAOE] = useState(false);
@@ -24,6 +25,9 @@ const CreateSpells = () => {
   const [saveEffect, setSaveEffect] = useState("");
   const [customSaveEffect, setCustomSaveEffect] = useState("");
   const [damages, setDamages] = useState([{ type: "", number: "", die: "" }]);
+  const [availableClasses, setAvailableClasses] = useState([]);
+  const [availableSubclasses, setAvailableSubclasses] = useState([]);
+  const navigate = useNavigate();
 
   const spellLevels = [
     "Cantrip",
@@ -137,12 +141,20 @@ const CreateSpells = () => {
     setFlavorText(e.target.value);
   };
 
-  const HandleClasses = (e) => {
-    setClasses(e.target.value);
+  const HandleClassChange = (className) => {
+    setClasses((prev) =>
+      prev.includes(className)
+        ? prev.filter((c) => c !== className)
+        : [...prev, className]
+    );
   };
 
-  const HandleSubclasses = (e) => {
-    setSubclasses(e.target.value);
+  const HandleSubclassChange = (subclassName) => {
+    setSubclasses((prev) =>
+      prev.includes(subclassName)
+        ? prev.filter((s) => s !== subclassName)
+        : [...prev, subclassName]
+    );
   };
 
   const HandleSourceChange = (e) => {
@@ -165,7 +177,22 @@ const CreateSpells = () => {
       }
     };
 
+    const fetchClassesAndSubclasses = async () => {
+      const classesResponse = await fetch(
+        "http://localhost:2712/api/components/getallclasses"
+      );
+      const subclassesResponse = await fetch(
+        "http://localhost:2712/api/components/getallsubclasses"
+      );
+
+      if (classesResponse.ok && subclassesResponse.ok) {
+        setAvailableClasses(await classesResponse.json());
+        setAvailableSubclasses(await subclassesResponse.json());
+      }
+    };
+
     fetchSources();
+    fetchClassesAndSubclasses();
   }, []);
 
   const HandleRangeBasedAOE = (e) => {
@@ -202,6 +229,60 @@ const CreateSpells = () => {
     setDamages([...damages, { type: "", number: "", die: "" }]);
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const spellData = {
+      name: spellName,
+      level: parseInt(spellLevel.replace(/[^\d]/g, "")) || 0,
+      castingtime: castingTime === "Custom" ? customCastingTime : castingTime,
+      duration: duration === "Custom" ? customDuration : duration,
+      school: school,
+      concentration: concentration,
+      range: range,
+      components: components,
+      flavourtext: flavorText,
+      classes: classes,
+      subclasses: subclasses,
+      source: selectedSource,
+      type: isRangeBasedAOE ? "AttackBasedRangeAOEAttack" : "Basic",
+      aoeshape: aoeShape,
+      aoeradius: parseInt(aoeRadius) || 0,
+      saveattribute: saveAttribute,
+      damage: damages.reduce((acc, damage) => {
+        if (damage.type && damage.number && damage.die) {
+          acc[damage.type] = `${damage.number}${damage.die}`;
+        }
+        return acc;
+      }, {}),
+      saveeffect: saveEffect === "Custom" ? customSaveEffect : saveEffect,
+    };
+
+    try {
+      const response = await fetch(
+        "http://localhost:2712/api/components/createspells",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(spellData),
+        }
+      );
+
+      if (response.ok) {
+        alert("Spell created successfully");
+        navigate("/");
+      } else {
+        console.error("Failed to create spell");
+        alert("Failed to create spell");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      // Handle network errors
+    }
+  };
+
   return (
     <div className="create-source-container grid grid-cols-12 h-screen">
       <div className="col-span-4 h-full">
@@ -212,7 +293,7 @@ const CreateSpells = () => {
         />
       </div>
       <div className="col-span-8 p-8 flex items-center justify-center">
-        <form className="w-full max-w-2xl text-center">
+        <form className="w-full max-w-2xl text-center" onSubmit={handleSubmit}>
           <div className="mb-8">
             <label
               htmlFor="spellname"
@@ -395,37 +476,45 @@ const CreateSpells = () => {
             />
           </div>
           <div className="mb-8">
-            <label
-              htmlFor="classes"
-              className="block text-3xl font-semibold text-gray-800 mb-4"
-            >
+            <label className="block text-3xl font-semibold text-gray-800 mb-4">
               Classes
             </label>
-            <input
-              type="text"
-              id="classes"
-              value={classes}
-              onChange={HandleClasses}
-              placeholder="Enter classes (comma-separated)"
-              className="w-full p-2 mb-4 border rounded"
-            />
+            <div className="grid grid-cols-3 gap-2">
+              {availableClasses.map((className) => (
+                <div key={className} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`class-${className}`}
+                    checked={classes.includes(className)}
+                    onChange={() => HandleClassChange(className)}
+                    className="w-5 h-5 mr-2"
+                  />
+                  <label htmlFor={`class-${className}`}>{className}</label>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="mb-8">
-            <label
-              htmlFor="subclasses"
-              className="block text-3xl font-semibold text-gray-800 mb-4"
-            >
+            <label className="block text-3xl font-semibold text-gray-800 mb-4">
               Subclasses
             </label>
-            <input
-              type="text"
-              id="subclasses"
-              value={subclasses}
-              onChange={HandleSubclasses}
-              placeholder="Enter subclasses (comma-separated)"
-              className="w-full p-2 mb-4 border rounded"
-            />
+            <div className="grid grid-cols-3 gap-2">
+              {availableSubclasses.map((subclassName) => (
+                <div key={subclassName} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`subclass-${subclassName}`}
+                    checked={subclasses.includes(subclassName)}
+                    onChange={() => HandleSubclassChange(subclassName)}
+                    className="w-5 h-5 mr-2"
+                  />
+                  <label htmlFor={`subclass-${subclassName}`}>
+                    {subclassName}
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="mb-8">
             <label
@@ -620,6 +709,12 @@ const CreateSpells = () => {
               </div>
             </>
           )}
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Create Spell
+          </button>
         </form>
       </div>
     </div>

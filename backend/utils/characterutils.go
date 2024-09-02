@@ -74,3 +74,17 @@ func FindClassObjectID(className string) (primitive.ObjectID, error) {
 	return class.ID, nil
 
 }
+func ConvertNamesToObjectIDs(collection *mongo.Collection, names []string) ([]primitive.ObjectID, error) {
+	var ids []primitive.ObjectID
+	for _, name := range names {
+		var result struct {
+			ID primitive.ObjectID `bson:"_id"`
+		}
+		err := collection.FindOne(context.TODO(), bson.M{"name": name}).Decode(&result)
+		if err != nil {
+			return nil, fmt.Errorf("invalid name: %s", name)
+		}
+		ids = append(ids, result.ID)
+	}
+	return ids, nil
+}

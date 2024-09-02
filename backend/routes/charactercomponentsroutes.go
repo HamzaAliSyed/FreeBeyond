@@ -21,7 +21,7 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/createsource", handlecreatesource)
 	mux.HandleFunc("/api/components/getallsources", getAllSources)
 	mux.HandleFunc("/api/components/getallsourcesnames", getAllSourcesNames)
-	mux.HandleFunc("/api/components/addspells", handleAddSpells)
+	mux.HandleFunc("/api/components/createspells", handleCreateSpells)
 	mux.HandleFunc("/api/components/createclass", handleCreateClass)
 	mux.HandleFunc("/api/components/createsubclass", handleCreateSubClass)
 	mux.HandleFunc("/api/components/createitems", handleCreateNewItems)
@@ -191,7 +191,7 @@ func getAllSourcesNames(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(sourceNames)
 }
 
-func handleAddSpells(response http.ResponseWriter, request *http.Request) {
+func handleCreateSpells(response http.ResponseWriter, request *http.Request) {
 	utils.AllowCorsHeaderAndPreflight(response, request)
 	methodError := utils.OnlyPost(response, request)
 
@@ -208,10 +208,10 @@ func handleAddSpells(response http.ResponseWriter, request *http.Request) {
 		School        string            `json:"school"`
 		Concentration bool              `json:"concentration"`
 		Range         string            `json:"range"`
-		Components    []string          `json:"componenets"`
+		Components    []string          `json:"components"`
 		FlavourText   string            `json:"flavourtext"`
-		Classes       string            `json:"classes"`
-		SubClasses    string            `json:"subclasses"`
+		Classes       []string          `json:"classes"`
+		SubClasses    []string          `json:"subclasses"`
 		Source        string            `json:"source"`
 		Type          string            `json:"type"`
 		AOEShape      string            `json:"aoeshape"`
@@ -225,6 +225,18 @@ func handleAddSpells(response http.ResponseWriter, request *http.Request) {
 
 	if jsonParseError != nil {
 		http.Error(response, "Unable to Parse JSON", http.StatusBadRequest)
+		return
+	}
+
+	classIDs, err := utils.ConvertNamesToObjectIDs(database.Classes, SpellRequest.Classes)
+	if err != nil {
+		http.Error(response, "Invalid class", http.StatusBadRequest)
+		return
+	}
+
+	subclassIDs, err := utils.ConvertNamesToObjectIDs(database.SubClasses, SpellRequest.SubClasses)
+	if err != nil {
+		http.Error(response, "Invalid subclass", http.StatusBadRequest)
 		return
 	}
 
@@ -244,8 +256,8 @@ func handleAddSpells(response http.ResponseWriter, request *http.Request) {
 					Range:         SpellRequest.Range,
 					Components:    SpellRequest.Components,
 					FlavourText:   SpellRequest.FlavourText,
-					Classes:       SpellRequest.Classes,
-					SubClasses:    SpellRequest.SubClasses,
+					Classes:       classIDs,
+					SubClasses:    subclassIDs,
 					SourceName:    SpellRequest.Source,
 				},
 				AOEShape:      SpellRequest.AOEShape,
