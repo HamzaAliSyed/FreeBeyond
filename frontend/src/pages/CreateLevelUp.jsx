@@ -20,6 +20,30 @@ const CreateLevelUp = () => {
     },
   ]);
 
+  const [choices, setChoices] = useState([]);
+
+  const addChoice = () => {
+    setChoices([...choices, { name: "", list: 0, toChooseFrom: [] }]);
+  };
+
+  const removeChoice = (index) => {
+    setChoices(choices.filter((_, i) => i !== index));
+  };
+
+  const handleChoiceChange = (index, field, value) => {
+    const newChoices = [...choices];
+    newChoices[index][field] = value;
+    setChoices(newChoices);
+  };
+
+  const handleToChooseFromChange = (index, value) => {
+    const newChoices = [...choices];
+    newChoices[index].toChooseFrom = value
+      .split(",")
+      .map((item) => item.trim());
+    setChoices(newChoices);
+  };
+
   const addTextbasedAbility = () => {
     setTextbasedAbilities([
       ...textbasedAbilities,
@@ -179,6 +203,14 @@ const CreateLevelUp = () => {
         modifiervalue: ability.modifierValue,
       })),
       spellcasting: {}, // Add appropriate spellcasting data if needed
+
+      choices: choices.reduce((acc, choice) => {
+        acc[choice.name] = {
+          list: choice.list,
+          tochoosefrom: choice.toChooseFrom,
+        };
+        return acc;
+      }, {}),
     };
 
     console.log("Sending data:", JSON.stringify(levelUpData, null, 2));
@@ -662,6 +694,58 @@ const CreateLevelUp = () => {
               className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
               + Add Modifier Ability
+            </button>
+          </div>
+          <div className="mb-6">
+            <label className="block text-xl font-semibold text-gray-700 mb-2">
+              Choices
+            </label>
+            {choices.map((choice, index) => (
+              <div
+                key={index}
+                className="mb-4 p-4 border border-gray-300 rounded-lg relative"
+              >
+                <input
+                  type="text"
+                  value={choice.name}
+                  onChange={(e) =>
+                    handleChoiceChange(index, "name", e.target.value)
+                  }
+                  className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg"
+                  placeholder="Choice Name"
+                />
+                <input
+                  type="number"
+                  value={choice.list}
+                  onChange={(e) =>
+                    handleChoiceChange(index, "list", parseInt(e.target.value))
+                  }
+                  className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg"
+                  placeholder="Number to Choose"
+                />
+                <textarea
+                  value={choice.toChooseFrom.join(", ")}
+                  onChange={(e) =>
+                    handleToChooseFromChange(index, e.target.value)
+                  }
+                  className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg"
+                  placeholder="Options to Choose From (comma-separated)"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeChoice(index)}
+                  className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addChoice}
+              className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              + Add Choice
             </button>
           </div>
           <button

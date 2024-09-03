@@ -24,13 +24,19 @@ const (
 	LongRest  Recovery = "Long Rest"
 )
 
+type ChoiceOptions struct {
+	List         int      `bson:"list"`
+	ToChooseFrom []string `bson:"tochoosefrom"`
+}
+
 type Levels struct {
-	Level              int                  `bson:"level"`
-	ProficiencyBonus   int                  `bson:"proficiencybonus"`
-	FlavorAbilities    []TextBasedAbility   `bson:"flavourabilities,omitempty"`
-	ChargeBasedAbility []ChargeBasedAbility `bson:"chargebasedability,omitempty"`
-	ModifierAbility    []ModifierAbility    `bson:"modifierability,omitempty"`
-	SpellCasting       SpellCasting         `bson:"spellcasting,omitempty"`
+	Level              int                      `bson:"level"`
+	ProficiencyBonus   int                      `bson:"proficiencybonus"`
+	FlavorAbilities    []TextBasedAbility       `bson:"flavourabilities,omitempty"`
+	ChargeBasedAbility []ChargeBasedAbility     `bson:"chargebasedability,omitempty"`
+	ModifierAbility    []ModifierAbility        `bson:"modifierability,omitempty"`
+	SpellCasting       SpellCasting             `bson:"spellcasting,omitempty"`
+	Choices            map[string]ChoiceOptions `bson:"choices"`
 }
 
 type TextBasedAbility struct {

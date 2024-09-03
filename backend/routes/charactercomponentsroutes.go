@@ -818,6 +818,11 @@ func addLevelToClass(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	type ChoiceOptions struct {
+		List         int      `json:"list"`
+		ToChooseFrom []string `json:"tochoosefrom"`
+	}
+
 	var levelRequest struct {
 		Class              string                      `json:"class"`
 		Level              int                         `json:"level"`
@@ -826,6 +831,7 @@ func addLevelToClass(response http.ResponseWriter, request *http.Request) {
 		ChargeBasedAbility []models.ChargeBasedAbility `json:"chargebasedability"`
 		ModifierAbility    []models.ModifierAbility    `json:"modifierability"`
 		SpellCasting       models.SpellCasting         `json:"spellcasting"`
+		Choices            map[string]ChoiceOptions    `json:"choices"`
 	}
 
 	if jsonParseError := json.NewDecoder(request.Body).Decode(&levelRequest); jsonParseError != nil {
@@ -847,6 +853,14 @@ func addLevelToClass(response http.ResponseWriter, request *http.Request) {
 		ChargeBasedAbility: levelRequest.ChargeBasedAbility,
 		ModifierAbility:    levelRequest.ModifierAbility,
 		SpellCasting:       levelRequest.SpellCasting,
+		Choices:            make(map[string]models.ChoiceOptions),
+	}
+
+	for key, choice := range levelRequest.Choices {
+		level.Choices[key] = models.ChoiceOptions{
+			List:         choice.List,
+			ToChooseFrom: choice.ToChooseFrom,
+		}
 	}
 
 	levelIndex := level.Level - 1
