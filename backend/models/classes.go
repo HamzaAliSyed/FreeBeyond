@@ -12,9 +12,16 @@ const (
 type RuleType string
 
 const (
-	CoreRule RuleType = "CoreRule"
+	CoreRule RuleType = "Core Rule"
 	Variant  RuleType = "Variant"
 	Optional RuleType = "Optional"
+)
+
+type Recovery string
+
+const (
+	ShortRest Recovery = "Short Rest"
+	LongRest  Recovery = "Long Rest"
 )
 
 type Levels struct {
@@ -40,6 +47,7 @@ type ChargeBasedAbility struct {
 	NumberOfChargesRemaining int      `bson:"numberofchargesremaining"`
 	Availability             string   `bson:"availability"`
 	RuleType                 RuleType `bson:"ruletype"`
+	Recovery                 Recovery `bson:"recovery"`
 }
 
 type ModifierAbility struct {

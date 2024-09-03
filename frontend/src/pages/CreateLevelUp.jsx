@@ -40,6 +40,7 @@ const CreateLevelUp = () => {
       numberOfChargesRemaining: "",
       availability: "",
       ruleType: "",
+      recovery: "",
     },
   ]);
 
@@ -166,6 +167,7 @@ const CreateLevelUp = () => {
         ),
         availability: ability.availability.toLowerCase(),
         ruletype: ability.ruleType.toLowerCase(),
+        recovery: ability.recovery,
       })),
       modifierability: modifierAbilities.map((ability) => ({
         title: ability.title,
@@ -220,6 +222,7 @@ const CreateLevelUp = () => {
         numberOfChargesRemaining: "",
         availability: "",
         ruleType: "",
+        recovery: "",
       },
     ]);
   };
@@ -373,7 +376,7 @@ const CreateLevelUp = () => {
                   className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg"
                 >
                   <option value="">Select Rule Type</option>
-                  {["CoreRule", "Variant", "Optional"].map((option) => (
+                  {["Core Rule", "Variant", "Optional"].map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -484,11 +487,26 @@ const CreateLevelUp = () => {
                   className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg"
                 >
                   <option value="">Select Rule Type</option>
-                  {["CoreRule", "Variant", "Optional"].map((option) => (
+                  {["Core Rule", "Variant", "Optional"].map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
                   ))}
+                </select>
+                <select
+                  value={ability.recovery}
+                  onChange={(e) =>
+                    handleChargedAbilityChange(
+                      index,
+                      "recovery",
+                      e.target.value
+                    )
+                  }
+                  className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg"
+                >
+                  <option value="">Select Recovery</option>
+                  <option value="Short Rest">Short Rest</option>
+                  <option value="Long Rest">Long Rest</option>
                 </select>
                 <button
                   type="button"
@@ -569,7 +587,7 @@ const CreateLevelUp = () => {
                   className="w-full text-lg p-2 mb-2 border-2 border-gray-300 rounded-lg"
                 >
                   <option value="">Select Rule Type</option>
-                  {["CoreRule", "Variant", "Optional"].map((option) => (
+                  {["Core Rule", "Variant", "Optional"].map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
