@@ -33,3 +33,12 @@ func OnlyGet(response http.ResponseWriter, request *http.Request) error {
 
 	return nil
 }
+
+func OnlyPut(response http.ResponseWriter, request *http.Request) error {
+	if request.Method != http.MethodPut {
+		http.Error(response, "Only Put method allowed on the end point", http.StatusMethodNotAllowed)
+		return fmt.Errorf("method not allowed")
+	}
+
+	return nil
+}

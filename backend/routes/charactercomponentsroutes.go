@@ -32,6 +32,7 @@ func HandleComponentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/components/getallclasses", getAllClasses)
 	mux.HandleFunc("/api/components/getallsubclasses", getAllSubClasses)
 	mux.HandleFunc("/api/components/createrace", handleCreateRace)
+	mux.HandleFunc("/api/components/addlevel", addLevelToClass)
 }
 
 func getAbilityModifier(response http.ResponseWriter, request *http.Request) {
@@ -808,4 +809,74 @@ func handleCreateRace(response http.ResponseWriter, request *http.Request) {
 	response.WriteHeader(http.StatusCreated)
 	json.NewEncoder(response).Encode(race)
 
+}
+
+func addLevelToClass(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if methodError := utils.OnlyPut(response, request); methodError != nil {
+		http.Error(response, "Only Put method allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var levelRequest struct {
+		Class              string                      `json:"class"`
+		Level              int                         `json:"level"`
+		ProficiencyBonus   int                         `json:"proficiencybonus"`
+		FlavourAbility     []models.TextBasedAbility   `json:"flavourabilities"`
+		ChargeBasedAbility []models.ChargeBasedAbility `json:"chargebasedability"`
+		ModifierAbility    []models.ModifierAbility    `json:"modifierability"`
+		SpellCasting       models.SpellCasting         `json:"spellcasting"`
+	}
+
+	if jsonParseError := json.NewDecoder(request.Body).Decode(&levelRequest); jsonParseError != nil {
+		http.Error(response, "Error Parsing the request", http.StatusInternalServerError)
+		return
+	}
+
+	class, classFetchError := utils.GetClassFromName(levelRequest.Class)
+
+	if classFetchError != nil {
+		http.Error(response, classFetchError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	level := models.Levels{
+		Level:              levelRequest.Level,
+		ProficiencyBonus:   levelRequest.ProficiencyBonus,
+		FlavorAbilities:    levelRequest.FlavourAbility,
+		ChargeBasedAbility: levelRequest.ChargeBasedAbility,
+		ModifierAbility:    levelRequest.ModifierAbility,
+		SpellCasting:       levelRequest.SpellCasting,
+	}
+
+	levelIndex := level.Level - 1
+
+	if levelIndex < len(class.Levels) {
+		class.Levels[levelIndex] = level
+	} else {
+		for len(class.Levels) <= levelIndex {
+			class.Levels = append(class.Levels, models.Levels{})
+		}
+		class.Levels[levelIndex] = level
+	}
+
+	updateResult, updateErr := database.Classes.UpdateOne(
+		context.TODO(),
+		bson.M{"_id": class.ID},
+		bson.M{"$set": bson.M{"levels": class.Levels}},
+	)
+
+	if updateErr != nil {
+		http.Error(response, "Error updating class", http.StatusInternalServerError)
+		return
+	}
+
+	if updateResult.MatchedCount == 0 {
+		http.Error(response, "No class found to update", http.StatusNotFound)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(&class)
 }

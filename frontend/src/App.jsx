@@ -8,6 +8,7 @@ import CreateItems from "./pages/CreateItem";
 import CreateArtisianTools from "./pages/CreateArtisianTools";
 import CreateSubClass from "./pages/CreateSubClass";
 import CreateRace from "./pages/CreateRace";
+import CreateLevelUp from "./pages/CreateLevelUp";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/create-artisiantools" element={<CreateArtisianTools />} />
         <Route path="/create-subclass" element={<CreateSubClass />} />
         <Route path="/create-race" element={<CreateRace />} />
+        <Route path="/add-level" element={<CreateLevelUp />} />
       </Routes>
     </Router>
   );

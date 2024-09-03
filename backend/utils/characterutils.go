@@ -114,3 +114,16 @@ func GenerateSavingThrows(abilityScores []models.AbilityScore, profBonus int) []
 
 	return savingThrows
 }
+
+func GetClassFromName(className string) (class *models.Class, fetchError error) {
+	class = &models.Class{}
+	classFetchError := database.Classes.FindOne(context.TODO(), bson.M{"name": className}).Decode(class)
+	if classFetchError != nil {
+		if classFetchError == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("class not found: %s", className)
+		}
+		return nil, classFetchError
+	}
+
+	return class, nil
+}
