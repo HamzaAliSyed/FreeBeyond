@@ -19,6 +19,7 @@ var Items *mongo.Collection
 var ArtisianTools *mongo.Collection
 var SubClasses *mongo.Collection
 var Races *mongo.Collection
+var ClassFeatures *mongo.Collection
 
 func ConnectToMongo() {
 	MongoClientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -45,4 +46,5 @@ func ConnectToMongo() {
 	SubClasses = MongoClient.Database("DND").Collection("SubClasses")
 	Characters = MongoClient.Database("DND").Collection("Characters")
 	Races = MongoClient.Database("DND").Collection("Races")
+	ClassFeatures = MongoClient.Database("DND").Collection("Class Features")
 }
