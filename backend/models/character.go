@@ -4,6 +4,13 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type HitDie string
 
+const (
+	d6  HitDie = "d6"
+	d8  HitDie = "d8"
+	d10 HitDie = "d10"
+	d12 HitDie = "d12"
+)
+
 type ClassData struct {
 	ClassesAndLevels map[string]int
 	HitDices         map[HitDie]int
