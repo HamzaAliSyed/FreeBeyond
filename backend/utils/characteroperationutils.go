@@ -4,6 +4,7 @@ import (
 	"backend/database"
 	"backend/models"
 	"context"
+	"errors"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -452,4 +453,63 @@ func AddToolProficiencies(character *models.Character, toolProf []string) *model
 
 	character.ToolProficiencies = append(character.ToolProficiencies, newProf...)
 	return character
+}
+
+func AddActionToCharacter(character *models.Character, action string) *models.Character {
+	for _, existingAction := range character.Actions {
+		if action == existingAction {
+			return character
+		}
+	}
+	character.Actions = append(character.Actions, action)
+	return character
+}
+
+func AddPassiveToCharacter(character *models.Character, passive string) *models.Character {
+	for _, existingPassive := range character.Passives {
+		if passive == existingPassive {
+			return character
+		}
+	}
+	character.Passives = append(character.Passives, passive)
+	return character
+}
+
+func AddReactionToCharacter(character *models.Character, reaction string) *models.Character {
+	for _, existingReaction := range character.Reactions {
+		if reaction == existingReaction {
+			return character
+		}
+	}
+	character.Reactions = append(character.Reactions, reaction)
+	return character
+}
+
+func AddBonusActionToCharacter(character *models.Character, bonusAction string) *models.Character {
+	for _, existingBonusAction := range character.BonusActions {
+		if bonusAction == existingBonusAction {
+			return character
+		}
+	}
+	character.BonusActions = append(character.BonusActions, bonusAction)
+	return character
+}
+
+func SetSize(character *models.Character, size string) (*models.Character, error) {
+
+	validSizes := map[string]models.Size{
+		"Tiny":       models.Tiny,
+		"Small":      models.Small,
+		"Medium":     models.Medium,
+		"Large":      models.Large,
+		"Huge":       models.Huge,
+		"Gargantuan": models.Gargantuan,
+		"Colossal":   models.Colossal,
+	}
+
+	if validSize, ok := validSizes[size]; ok {
+		character.Size = validSize
+		return character, nil
+	}
+	return character, errors.New("invalid size")
 }

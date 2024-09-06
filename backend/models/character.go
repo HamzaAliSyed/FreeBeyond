@@ -11,6 +11,18 @@ const (
 	d12 HitDie = "d12"
 )
 
+type Size string
+
+const (
+	Tiny       Size = "Tiny"
+	Small      Size = "Small"
+	Medium     Size = "Medium"
+	Large      Size = "Large"
+	Huge       Size = "Huge"
+	Gargantuan Size = "Gargantuan"
+	Colossal   Size = "Colossal"
+)
+
 type ClassData struct {
 	ClassesAndLevels map[string]int
 	HitDices         map[HitDie]int
@@ -98,8 +110,9 @@ type Character struct {
 	WeaponProficiencies  []string           `bson:"weaponproficiencies"`
 	ArmorProficiencies   []string           `bson:"armorproficiencies"`
 	ToolProficiencies    []string           `bson:"toolproficiencies"`
-	Action               []string           `bson:"active"`
-	Passive              []string           `bson:"passive"`
-	Reaction             []string           `bson:"reaction"`
-	Bonus                []string           `bson:"bonus"`
+	Actions              []string           `bson:"active"`
+	Passives             []string           `bson:"passive"`
+	Reactions            []string           `bson:"reaction"`
+	BonusActions         []string           `bson:"bonusactions"`
+	Size                 Size               `bson:"size"`
 }

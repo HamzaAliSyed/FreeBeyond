@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"backend/classes"
 	"backend/database"
 	"backend/models"
 	"backend/utils"
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -17,7 +17,6 @@ import (
 func CharacterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/character/create", handleCreateCharacter)
 	mux.HandleFunc("/api/character/", handleGetCharacter)
-	mux.HandleFunc("/api/character/addlevel", handleAddClassToCharacter)
 }
 
 func handleCreateCharacter(response http.ResponseWriter, request *http.Request) {
@@ -130,6 +129,20 @@ func handleCreateCharacter(response http.ResponseWriter, request *http.Request) 
 		Skills:           skillsArray,
 	}
 
+	character = *utils.GenerateInitialSenses(&character)
+	character = *utils.InitializeEquippedItems(&character)
+	character = *utils.CalculatePassives(&character)
+
+	updatedChar, initiativeError := utils.SetInitiative(&character)
+
+	if initiativeError != nil {
+		log.Printf("Error setting initiative: %v", initiativeError)
+		http.Error(response, initiativeError.Error(), http.StatusInternalServerError)
+		return
+	} else {
+		character = *updatedChar
+	}
+
 	result, err := database.Characters.InsertOne(context.TODO(), character)
 	if err != nil {
 		http.Error(response, "Error inserting character into database: "+err.Error(), http.StatusInternalServerError)
@@ -172,66 +185,11 @@ func handleGetCharacter(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(character)
 }
 
-func handleAddClassToCharacter(response http.ResponseWriter, request *http.Request) {
+func AddRaceToCharacter(response http.ResponseWriter, request *http.Request) {
 	utils.AllowCorsHeaderAndPreflight(response, request)
-	if methodError := utils.OnlyPost(response, request); methodError != nil {
+
+	if methodError := utils.OnlyGet(response, request); methodError != nil {
 		http.Error(response, methodError.Error(), http.StatusMethodNotAllowed)
 		return
 	}
-
-	var levelupRequest struct {
-		Name  string `json:"name"`
-		Class string `json:"class"`
-		Level int    `json:"level"`
-	}
-
-	if jsonParseError := json.NewDecoder(request.Body).Decode(&levelupRequest); jsonParseError != nil {
-		http.Error(response, jsonParseError.Error(), http.StatusBadRequest)
-		return
-	}
-
-	character, characterRetrieveError := utils.GetCharacterByName(levelupRequest.Name)
-
-	if characterRetrieveError != nil {
-		http.Error(response, characterRetrieveError.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if _, levelCheckError := utils.CanAddClassLevel(character, levelupRequest.Class, levelupRequest.Level); levelCheckError != nil {
-		http.Error(response, levelCheckError.Error(), http.StatusUnprocessableEntity)
-		return
-	}
-
-	switch levelupRequest.Class {
-	case "Bloodhunter":
-		{
-			switch levelupRequest.Level {
-			case 1:
-				{
-					var levelUpError error
-					character, levelUpError = classes.BloodHunterLevelOne(character)
-					if levelUpError != nil {
-						http.Error(response, levelUpError.Error(), http.StatusInternalServerError)
-						return
-					}
-				}
-			}
-		}
-	}
-
-	_, err := database.Characters.UpdateOne(
-		context.TODO(),
-		bson.M{"_id": character.ID},
-		bson.M{"$set": character},
-	)
-	if err != nil {
-		http.Error(response, "Failed to update character: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	response.WriteHeader(http.StatusOK)
-	json.NewEncoder(response).Encode(map[string]string{
-		"message": "Character class updated successfully",
-	})
-
 }
