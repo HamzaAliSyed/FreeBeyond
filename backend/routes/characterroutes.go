@@ -19,6 +19,33 @@ func HandleRoutes(mux *http.ServeMux) {
 
 func handleCreateCharacter(response http.ResponseWriter, request *http.Request) {
 
+	allSkills := map[string]string{
+		"Athletics":      "Strength",
+		"Acrobatics":     "Dexterity",
+		"SleightOfHand":  "Dexterity",
+		"Stealth":        "Dexterity",
+		"Arcana":         "Intelligence",
+		"History":        "Intelligence",
+		"Investigation":  "Intelligence",
+		"Nature":         "Intelligence",
+		"Religion":       "Intelligence",
+		"AnimalHandling": "Wisdom",
+		"Insight":        "Wisdom",
+		"Medicine":       "Wisdom",
+		"Perception":     "Wisdom",
+		"Survival":       "Wisdom",
+		"Deception":      "Charisma",
+		"Intimidation":   "Charisma",
+		"Performance":    "Charisma",
+		"Persuasion":     "Charisma",
+	}
+
+	allPassives := map[string]string{
+		"Perception":    "Wisdom",
+		"Investigation": "Intelligence",
+		"Insight":       "Wisdom",
+	}
+
 	utils.AllowCorsHeaderAndPreflight(response, request)
 	if methodError := utils.OnlyPost(response, request); methodError != nil {
 		http.Error(response, methodError.Error(), http.StatusMethodNotAllowed)
@@ -54,11 +81,22 @@ func handleCreateCharacter(response http.ResponseWriter, request *http.Request) 
 			http.Error(response, abilityScoreCreationError.Error(), http.StatusBadRequest)
 			return
 		}
-		abilityScoreAddError := character.AddAbilityScoreToCharacter(*abilityScore)
-		if abilityScoreAddError != nil {
-			http.Error(response, abilityScoreAddError.Error(), http.StatusInternalServerError)
-			return
-		}
+		character.AddAbilityScoreToCharacter(*abilityScore)
+		modifier := (statvalue - 10) / 2
+		savingThrow := models.CreateSavingThrow(statname, int(modifier))
+		character.AddSavingThrowToCharacter(*savingThrow)
+	}
+
+	for skill, stat := range allSkills {
+		modifier := character.GetAbilityScoreModifier(stat)
+		Skill := models.CreateSkill(skill, stat, modifier)
+		character.AddSkillToCharacter(*Skill)
+	}
+
+	for skill, stat := range allPassives {
+		modifier := character.GetAbilityScoreModifier(stat)
+		Passive := models.CreatePassive(skill, stat, modifier)
+		character.AddPassiveToCharacter(*Passive)
 	}
 
 	fmt.Printf("Character: %+v\n", character)
@@ -66,6 +104,8 @@ func handleCreateCharacter(response http.ResponseWriter, request *http.Request) 
 	characterInsert := bson.M{
 		"name":          character.GetCharacterName(),
 		"abilityscores": character.GetAllAbilityScore(),
+		"savingthrows":  character.GetAllSavingThrow(),
+		"skills":        character.GetAllSkills(),
 	}
 
 	_, insertError := database.Characters.InsertOne(context.TODO(), characterInsert)
