@@ -99,6 +99,9 @@ func handleCreateCharacter(response http.ResponseWriter, request *http.Request) 
 		character.AddPassiveToCharacter(*Passive)
 	}
 
+	unArmedAttack := models.NewACBeatingAttack("Unarmed Strike", "Strength", 0, 5, &character, map[models.Damage]string{"Bludgeoning": "1d4"})
+	character.AddAttack(unArmedAttack)
+
 	fmt.Printf("Character: %+v\n", character)
 
 	characterInsert := bson.M{
@@ -106,6 +109,8 @@ func handleCreateCharacter(response http.ResponseWriter, request *http.Request) 
 		"abilityscores": character.GetAllAbilityScore(),
 		"savingthrows":  character.GetAllSavingThrow(),
 		"skills":        character.GetAllSkills(),
+		"passives":      character.GetAllPassives(),
+		"attacks":       character.GetAllAttacks(),
 	}
 
 	_, insertError := database.Characters.InsertOne(context.TODO(), characterInsert)

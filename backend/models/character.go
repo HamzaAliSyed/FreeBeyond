@@ -9,7 +9,79 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type CharacterOperations interface{}
+type Damage string
+
+const (
+	Acid        Damage = "Acid"
+	Bludgeoning Damage = "Bludgeoning"
+	Cold        Damage = "Cold"
+	Fire        Damage = "Fire"
+	Force       Damage = "Force"
+	Lightning   Damage = "Lightning"
+	Necrotic    Damage = "Necrotic"
+	Piercing    Damage = "Piercing"
+	Poison      Damage = "Poison"
+	Psychic     Damage = "Psychic"
+	Radiant     Damage = "Radiant"
+	Slashing    Damage = "Slashing"
+	Thunder     Damage = "Thunder"
+)
+
+type Attacks interface {
+	Create() interface{}
+}
+
+type ACBeatingAttacks struct {
+	AttackName        string            `bson:"attackname"`
+	DependentStat     string            `bson:"dependentstat"`
+	DependentModifier int               `bson:"dependentmodifier"`
+	IsProficienct     bool              `bson:"IsProficient"`
+	RangeMin          int               `bson:"rangemin"`
+	RangeMax          int               `bson:"rangemax"`
+	TotalValue        int               `bson:"totalvalue"`
+	Damage            map[Damage]string `bson:"damage"`
+}
+
+type DCSaveAttacks struct {
+	AttackName string            `bson:"attackname"`
+	SaveStat   string            `bson:"saveattack"`
+	SaveDC     int               `bson:"savedc"`
+	RangeMin   int               `bson:"rangemin"`
+	RangeMax   int               `bson:"rangemax"`
+	Damage     map[Damage]string `bson:"damage"`
+}
+
+func (acbeatingattacks *ACBeatingAttacks) Create() interface{} {
+	return acbeatingattacks
+}
+
+func (dcsaveattacks *DCSaveAttacks) Create() interface{} {
+	return dcsaveattacks
+}
+
+func NewACBeatingAttack(attackName, dependentStat string, rangeMin, rangeMax int, character *Character, damage map[Damage]string) *ACBeatingAttacks {
+	var acbeatingattack ACBeatingAttacks
+	acbeatingattack.AttackName = attackName
+	acbeatingattack.DependentStat = dependentStat
+	modifier := character.GetAbilityScoreModifier(dependentStat)
+	acbeatingattack.DependentModifier = modifier
+	acbeatingattack.RangeMin = rangeMin
+	acbeatingattack.RangeMax = rangeMax
+	acbeatingattack.Damage = damage
+	acbeatingattack.TotalValue = modifier
+	return &acbeatingattack
+}
+func NewDCSaveAttack(attackName, saveStat string, rangeMin, rangeMax int, character *Character, damage map[Damage]string) *DCSaveAttacks {
+	var dcsaveattack DCSaveAttacks
+	dcsaveattack.AttackName = attackName
+	dcsaveattack.SaveStat = saveStat
+	dcsaveattack.RangeMin = rangeMin
+	dcsaveattack.RangeMax = rangeMax
+	dcsaveattack.Damage = damage
+	modifier := character.GetAbilityScoreModifier(saveStat)
+	dcsaveattack.SaveDC = 8 + modifier
+	return &dcsaveattack
+}
 
 type AbilityScore struct {
 	StatName     string `bson:"statname"`
@@ -43,8 +115,9 @@ type Character struct {
 	charactername string             `bson:"charactername,omitempty"`
 	abilityscores []AbilityScore     `bson:"abilityscores,omitempty"`
 	savingthrows  []SavingThrow      `bson:"savingthrows,omitempty"`
-	skills        []Skill            `bson:"skills"`
-	passives      []Skill            `bson:"passives"`
+	skills        []Skill            `bson:"skills,omitempty"`
+	passives      []Skill            `bson:"passives,omitempty"`
+	attacks       []Attacks          `bson:"attacks,omitempty"`
 }
 
 func (character Character) SetName(name string) Character {
@@ -133,6 +206,10 @@ func (character *Character) AddPassiveToCharacter(passive Skill) {
 	character.passives = append(character.passives, passive)
 }
 
+func (character *Character) AddAttack(attack Attacks) {
+	character.attacks = append(character.attacks, attack)
+}
+
 func (character *Character) GetCharacterName() string {
 	return character.charactername
 }
@@ -160,4 +237,12 @@ func (character *Character) GetAllSavingThrow() []SavingThrow {
 
 func (character *Character) GetAllSkills() []Skill {
 	return character.skills
+}
+
+func (character *Character) GetAllPassives() []Skill {
+	return character.passives
+}
+
+func (character *Character) GetAllAttacks() []Attacks {
+	return character.attacks
 }
