@@ -12,6 +12,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type EquippedItem struct {
+	Head         string    `bson:"head"`
+	Neck         string    `bson:"neck"`
+	Body         string    `bson:"body"`
+	Wrist        string    `bson:"wrist"`
+	PrimaryArm   string    `bson:"primaryarm"`
+	SecondaryArm string    `bson:"secondaryarm"`
+	SideArm      string    `bson:"sidearm"`
+	Legs         string    `bson:"legs"`
+	Accessories  [3]string `bson:"accessories"`
+}
+
 type Damage string
 
 const (
@@ -32,6 +44,7 @@ const (
 
 type Attacks interface {
 	Create() interface{}
+	GetAttackName() string
 }
 
 type ACBeatingAttacks struct {
@@ -60,6 +73,14 @@ func (acbeatingattacks *ACBeatingAttacks) Create() interface{} {
 
 func (dcsaveattacks *DCSaveAttacks) Create() interface{} {
 	return dcsaveattacks
+}
+
+func (acbeatingattack *ACBeatingAttacks) GetAttackName() string {
+	return acbeatingattack.AttackName
+}
+
+func (dcsaveattack *DCSaveAttacks) GetAttackName() string {
+	return dcsaveattack.AttackName
 }
 
 func NewACBeatingAttack(attackName, dependentStat string, rangeMin, rangeMax int, character *Character, damage map[Damage]string) *ACBeatingAttacks {
@@ -123,6 +144,7 @@ type Character struct {
 	attacks             []Attacks          `bson:"attacks,omitempty"`
 	weaponproficiencies []string           `bson:"weaponproficiencies"`
 	inventory           map[*Item]int      `bson:"inventory"`
+	equippeditems       EquippedItem       `bson:"equippeditems"`
 }
 
 func (character Character) SetName(name string) Character {
@@ -232,28 +254,6 @@ func (character *Character) AddItemsToInventory(item *Item) {
 	} else {
 		character.inventory[item] = 1
 	}
-
-	itemProperties := (*item).GetAllProperties()
-	name := itemProperties["name"].(string)
-	rangemin := itemProperties["rangemin"].(int)
-	rangemax := itemProperties["rangemax"].(int)
-	damage := itemProperties["damage"].(map[Damage]string)
-
-	if checkIfWeapon(*item) {
-		switch checkWeaponType(*item) {
-		case "Melee Weapon":
-			{
-				attack := NewACBeatingAttack(name, "Strength", rangemin, rangemax, character, damage)
-				character.AddAttack(attack)
-			}
-		case "Ranged Weapon":
-			{
-				attack := NewACBeatingAttack(name, "Dexterity", rangemin, rangemax, character, damage)
-				character.AddAttack(attack)
-			}
-		}
-	}
-
 }
 
 func (character *Character) GetCharacterName() string {
@@ -295,6 +295,77 @@ func (character *Character) GetAllAttacks() []Attacks {
 
 func (character *Character) GetAllWeaponProficiencies() []string {
 	return character.weaponproficiencies
+}
+
+func (character *Character) GetAllEquiipedItems() EquippedItem {
+	return character.equippeditems
+}
+
+func (character *Character) EquipWeaponInHand(item Item, options []string) error {
+	if checkWeapon := checkIfWeapon(item); !checkWeapon {
+		return errors.New("item is not a weapon")
+	}
+
+	itemProperties := item.GetAllProperties()
+	rangeMin := itemProperties["rangemin"].(int)
+	rangeMax := itemProperties["rangemax"].(int)
+	damageMap := itemProperties["damage"].(map[Damage]string)
+	attackName := itemProperties["name"].(string)
+	tags := itemProperties["typetags"].([]string)
+	var firstDamageType Damage
+
+	for key := range damageMap {
+		firstDamageType = key
+		break
+	}
+
+	if len(character.equippeditems.PrimaryArm) == 0 && len(character.equippeditems.SecondaryArm) == 0 {
+		weaponType := checkWeaponType(item)
+		switch weaponType {
+		case "Melee Weapon":
+			{
+				modifierInt := character.GetAbilityScoreModifier("Strength")
+				modifierString := string(modifierInt)
+				damageMap[firstDamageType] += " + " + modifierString
+				newAttack := NewACBeatingAttack(attackName, "Strength", rangeMin, rangeMax, character, damageMap)
+				character.AddAttack(newAttack)
+				if utils.Contains(tags, "Two-handed") {
+					character.equippeditems.PrimaryArm = attackName
+					character.equippeditems.SecondaryArm = attackName
+				} else {
+					character.equippeditems.PrimaryArm = attackName
+				}
+
+			}
+		case "Ranged Weapon":
+			{
+				modifierInt := character.GetAbilityScoreModifier("Dexterity")
+				modifierString := string(modifierInt)
+				damageMap[firstDamageType] += " + " + modifierString
+				newAttack := NewACBeatingAttack(attackName, "Strength", rangeMin, rangeMax, character, damageMap)
+				character.AddAttack(newAttack)
+				if utils.Contains(tags, "Two-handed") {
+					character.equippeditems.PrimaryArm = attackName
+					character.equippeditems.SecondaryArm = attackName
+				} else {
+					character.equippeditems.PrimaryArm = attackName
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (character *Character) RemoveAttack(attackName string) error {
+	for i, attack := range character.attacks {
+		if attack.GetAttackName() == attackName {
+			character.attacks = append(character.attacks[:i], character.attacks[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("attack not found")
 }
 
 func checkIfWeapon(item Item) bool {
