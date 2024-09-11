@@ -2,8 +2,11 @@ package models
 
 import (
 	"backend/database"
+	"backend/utils"
+
 	"context"
 	"errors"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -111,13 +114,15 @@ type Skill struct {
 }
 
 type Character struct {
-	Id            primitive.ObjectID `bson:"_id,omitempty"`
-	charactername string             `bson:"charactername,omitempty"`
-	abilityscores []AbilityScore     `bson:"abilityscores,omitempty"`
-	savingthrows  []SavingThrow      `bson:"savingthrows,omitempty"`
-	skills        []Skill            `bson:"skills,omitempty"`
-	passives      []Skill            `bson:"passives,omitempty"`
-	attacks       []Attacks          `bson:"attacks,omitempty"`
+	Id                  primitive.ObjectID `bson:"_id,omitempty"`
+	charactername       string             `bson:"charactername,omitempty"`
+	abilityscores       []AbilityScore     `bson:"abilityscores,omitempty"`
+	savingthrows        []SavingThrow      `bson:"savingthrows,omitempty"`
+	skills              []Skill            `bson:"skills,omitempty"`
+	passives            []Skill            `bson:"passives,omitempty"`
+	attacks             []Attacks          `bson:"attacks,omitempty"`
+	weaponproficiencies []string           `bson:"weaponproficiencies"`
+	inventory           map[*Item]int      `bson:"inventory"`
 }
 
 func (character Character) SetName(name string) Character {
@@ -210,6 +215,47 @@ func (character *Character) AddAttack(attack Attacks) {
 	character.attacks = append(character.attacks, attack)
 }
 
+func (character *Character) AddWeaponProficiencies(weaponProficiency string) {
+	if len(character.weaponproficiencies) == 0 {
+		character.weaponproficiencies = append(character.weaponproficiencies, weaponProficiency)
+	} else {
+		exist := utils.Contains(character.weaponproficiencies, weaponProficiency)
+		if !exist {
+			character.weaponproficiencies = append(character.weaponproficiencies, weaponProficiency)
+		}
+	}
+}
+
+func (character *Character) AddItemsToInventory(item *Item) {
+	if count, exist := character.inventory[item]; exist {
+		character.inventory[item] = count + 1
+	} else {
+		character.inventory[item] = 1
+	}
+
+	itemProperties := (*item).GetAllProperties()
+	name := itemProperties["name"].(string)
+	rangemin := itemProperties["rangemin"].(int)
+	rangemax := itemProperties["rangemax"].(int)
+	damage := itemProperties["damage"].(map[Damage]string)
+
+	if checkIfWeapon(*item) {
+		switch checkWeaponType(*item) {
+		case "Melee Weapon":
+			{
+				attack := NewACBeatingAttack(name, "Strength", rangemin, rangemax, character, damage)
+				character.AddAttack(attack)
+			}
+		case "Ranged Weapon":
+			{
+				attack := NewACBeatingAttack(name, "Dexterity", rangemin, rangemax, character, damage)
+				character.AddAttack(attack)
+			}
+		}
+	}
+
+}
+
 func (character *Character) GetCharacterName() string {
 	return character.charactername
 }
@@ -245,4 +291,34 @@ func (character *Character) GetAllPassives() []Skill {
 
 func (character *Character) GetAllAttacks() []Attacks {
 	return character.attacks
+}
+
+func (character *Character) GetAllWeaponProficiencies() []string {
+	return character.weaponproficiencies
+}
+
+func checkIfWeapon(item Item) bool {
+	weaponClassifications := []string{"Simple Weapon", "Martial Weapon"}
+	itemProperties := item.GetAllProperties()
+	typetags := itemProperties["typetags"].([]string)
+	for _, tag := range weaponClassifications {
+		if utils.Contains(typetags, tag) {
+			return true
+		}
+	}
+	return false
+}
+
+func checkWeaponType(item Item) string {
+	weaponType := []string{"Melee Weapon", "Ranged Weapon"}
+	itemProperties := item.GetAllProperties()
+	typetags := itemProperties["typetags"].([]string)
+	for _, _type := range weaponType {
+		if utils.Contains(typetags, _type) {
+			return _type
+		}
+	}
+
+	message := fmt.Errorf("not a weapon, something went wrong")
+	return message.Error()
 }

@@ -11,10 +11,12 @@ import (
 	"reflect"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func HandleRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/create/character", handleCreateCharacter)
+	mux.HandleFunc("/api/character/addweaponproficiency", handleAddWeaponProficiencyCharacter)
 }
 
 func handleCreateCharacter(response http.ResponseWriter, request *http.Request) {
@@ -124,4 +126,75 @@ func handleCreateCharacter(response http.ResponseWriter, request *http.Request) 
 	response.Header().Set("Content-Type", "application/json")
 	response.Write([]byte("New Character created"))
 
+}
+
+func handleAddWeaponProficiencyCharacter(response http.ResponseWriter, request *http.Request) {
+	utils.AllowCorsHeaderAndPreflight(response, request)
+	if methodError := utils.OnlyPut(response, request); methodError != nil {
+		http.Error(response, methodError.Error(), http.StatusMethodNotAllowed)
+		return
+	}
+
+	var ProficiencyAddRequestStruct struct {
+		Name              string `json:"name"`
+		WeaponProficiency string `json:"weaponproficiency"`
+	}
+
+	if jsonParseError := json.NewDecoder(request.Body).Decode(&ProficiencyAddRequestStruct); jsonParseError != nil {
+		http.Error(response, jsonParseError.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var character *models.Character
+	var characterRetrieveError error
+	character, characterRetrieveError = GrabCharacterFromName(ProficiencyAddRequestStruct.Name)
+	if characterRetrieveError != nil {
+		http.Error(response, characterRetrieveError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	character.AddWeaponProficiencies(ProficiencyAddRequestStruct.WeaponProficiency)
+
+	characterUpdate := bson.M{
+		"$set": bson.M{
+			"weaponproficiencies": character.GetAllWeaponProficiencies(),
+		},
+	}
+	characterFilter := bson.M{
+		"_id": character.Id,
+	}
+
+	_, updateError := database.Characters.UpdateOne(context.TODO(), characterFilter, characterUpdate)
+
+	if updateError != nil {
+		http.Error(response, updateError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusCreated)
+	response.Header().Set("Content-Type", "application/json")
+	response.Write([]byte("Weapon Proficiency Added"))
+
+}
+
+func GrabCharacterFromName(characterName string) (*models.Character, error) {
+	queryFilter := bson.M{
+		"name": characterName,
+	}
+
+	var character models.Character
+
+	querySearchError := database.Characters.FindOne(context.TODO(), queryFilter).Decode(&character)
+
+	if querySearchError != nil {
+		if querySearchError == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("character not found: %s", characterName)
+		}
+		if querySearchError == mongo.ErrClientDisconnected {
+			return nil, fmt.Errorf("database connection error: %v", querySearchError)
+		}
+		return nil, fmt.Errorf("error retrieving character: %v", querySearchError)
+	}
+
+	return &character, nil
 }
