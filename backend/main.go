@@ -2,7 +2,6 @@ package main
 
 import (
 	"backend/database"
-	"backend/routes"
 	"log"
 	"net/http"
 
@@ -19,7 +18,6 @@ func main() {
 	const port = "2712"
 	database.ConnectToMongo()
 	backend := http.NewServeMux()
-	routes.HandleRoutes(backend)
-	routes.HandleComponentRoutes(backend)
+
 	log.Fatal(http.ListenAndServe(":"+port, backend))
 }
