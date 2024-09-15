@@ -56,6 +56,6 @@ func (savingThrow *SavingThrow) CreateSavingThrow(name string, mod int) {
 }
 
 func (savingThrow *SavingThrow) CalculateValue(character *Character) int {
-	value := savingThrow.additionalBonus + (int(savingThrow.savingThrowNumberOfProficiencies) * character.proficiencyBonus) + savingThrow.savingThrowMod
+	value := savingThrow.additionalBonus + int((savingThrow.savingThrowNumberOfProficiencies)*float64(character.proficiencyBonus)) + savingThrow.savingThrowMod
 	return value
 }
