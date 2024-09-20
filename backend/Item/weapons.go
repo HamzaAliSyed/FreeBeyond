@@ -101,3 +101,11 @@ func (weapon *Weapon) Print() {
 	fmt.Printf("Range Maximum: %v\n", weapon.rangemax)
 	fmt.Printf("Source: %v\n", weapon.source)
 }
+
+func (weapon *Weapon) GetItemName() string {
+	return weapon.name
+}
+
+func (weapon *Weapon) GetItemTags() []string {
+	return weapon.weaponProperty
+}

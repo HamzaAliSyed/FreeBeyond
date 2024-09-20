@@ -8,6 +8,7 @@ import (
 
 func main() {
 	var HazaristSchaffenhifer character.Character
+	HazaristSchaffenhifer.NewCharacter()
 
 	HazaristSchaffenhifer.SetCharacterName("Hazarist Schaffenhifer")
 	HazaristSchaffenhifer.SetProficiencyBonus(2)
@@ -24,8 +25,6 @@ func main() {
 	for abilityName, abilityScore := range AbilityScores {
 		HazaristSchaffenhifer.AddAbilityScore(abilityName, abilityScore)
 	}
-
-	HazaristSchaffenhifer.PrintCharacterSheet()
 
 	params := item.WeaponParams{
 		Name:           "Longsword",
@@ -50,5 +49,9 @@ func main() {
 	}
 
 	Longsword.Print()
+
+	HazaristSchaffenhifer.AddItemToInventory(Longsword)
+	HazaristSchaffenhifer.EquipWeapon(Longsword)
+	HazaristSchaffenhifer.PrintCharacterSheet()
 
 }

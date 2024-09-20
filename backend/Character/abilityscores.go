@@ -1,6 +1,8 @@
 package character
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type AbilityScore struct {
 	name     string `bson:"name"`

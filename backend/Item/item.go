@@ -7,6 +7,8 @@ type CreateParams interface{}
 type Item interface {
 	Create(params CreateParams) error
 	Print()
+	GetItemName() string
+	GetItemTags() []string
 }
 
 type Rarity string
