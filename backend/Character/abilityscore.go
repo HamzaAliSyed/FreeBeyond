@@ -22,7 +22,7 @@ func (abilityScore *AbilityScore) CreateAbilityScore(AS string, ASV int) error {
 }
 
 func (abilityScore *AbilityScore) Print() {
-	fmt.Printf("Ability Score: %v \n Value: %v \n Modifier: %v \n", abilityScore.name, abilityScore.abilityScoreValue, abilityScore.abilityScoreModifier)
+	fmt.Printf("\nAbility Score: %v \n Value: %v \n Modifier: %v \n", abilityScore.name, abilityScore.abilityScoreValue, abilityScore.abilityScoreModifier)
 }
 
 func (abilityScore *AbilityScore) GetNameandMod() (string, int) {

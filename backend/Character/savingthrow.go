@@ -24,5 +24,5 @@ func (savingThrow *SavingThrow) CreateSavingThrow(name string, modifier int) {
 }
 
 func (savingThrow *SavingThrow) Print() {
-	fmt.Printf("\nSaving Throw %v \nAdvantage: %v \nDisadvantage: %v \nValue: %v", savingThrow.name, savingThrow.hasAdvantage, savingThrow.hasDisadvantage, savingThrow.value)
+	fmt.Printf("\nSaving Throw %v \nAdvantage: %v \nDisadvantage: %v \nValue: %v\n", savingThrow.name, savingThrow.hasAdvantage, savingThrow.hasDisadvantage, savingThrow.value)
 }

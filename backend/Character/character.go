@@ -22,6 +22,7 @@ type Character struct {
 	hitdie           map[HitDie]int `bson:"hitdie"`
 	abilityScores    []AbilityScore `bson:"abilityscores"`
 	savingThrows     []SavingThrow  `bson:"savingthrow"`
+	skills           []Skill        `bson:"skills"`
 }
 
 func CreateCharacter(name string, strengthscore, dexterityscore, constitutionscore, intelligencescore, wisdomscore, charismascore int) (*Character, error) {
@@ -37,7 +38,32 @@ func CreateCharacter(name string, strengthscore, dexterityscore, constitutionsco
 		d20: 0,
 	}
 
-	defaultAbilityScore := map[string]int{"Strength": strengthscore, "Dexterity": dexterityscore, "Constitution": constitutionscore, "Intelligence": intelligencescore, "Wisdom": wisdomscore, "Charisma": charismascore}
+	defaultAbilityScore := map[string]int{"Strength": strengthscore,
+		"Dexterity":    dexterityscore,
+		"Constitution": constitutionscore,
+		"Intelligence": intelligencescore,
+		"Wisdom":       wisdomscore,
+		"Charisma":     charismascore}
+
+	defaultSkills := map[string]string{"Acrobatics": "Dexterity",
+		"Animal Handling": "Wisdom",
+		"Arcana":          "Intelligence",
+		"Athletics":       "Strength",
+		"Deception":       "Charisma",
+		"History":         "Intelligence",
+		"Insight":         "Wisdom",
+		"Intimidation":    "Charisma",
+		"Investigation":   "Intelligence",
+		"Medicine":        "Wisdom",
+		"Nature":          "Intelligence",
+		"Perception":      "Wisdom",
+		"Performance":     "Charisma",
+		"Persuasion":      "Charisma",
+		"Religion":        "Intelligence",
+		"Sleight of Hand": "Dexterity",
+		"Stealth":         "Dexterity",
+		"Survival":        "Wisdom",
+	}
 
 	for abilityScoreName, AbilityScoreValue := range defaultAbilityScore {
 		var abilityScore AbilityScore
@@ -53,6 +79,12 @@ func CreateCharacter(name string, strengthscore, dexterityscore, constitutionsco
 		var savingThrow SavingThrow
 		savingThrow.CreateSavingThrow(name, mod)
 		character.savingThrows = append(character.savingThrows, savingThrow)
+	}
+
+	for skillName, abilityName := range defaultSkills {
+		var skill Skill
+		skill.CreateSkill(skillName, abilityName, character)
+		character.skills = append(character.skills, skill)
 	}
 
 	return &character, nil
@@ -73,8 +105,25 @@ func (character Character) PrintCharacterSheet() {
 		singleAS.Print()
 	}
 
-	fmt.Println("SavingThrows")
+	fmt.Println("Saving Throws")
 	for _, savingThrow := range character.savingThrows {
 		savingThrow.Print()
 	}
+
+	fmt.Println("Skiils")
+	for _, skill := range character.skills {
+		skill.Print()
+	}
+}
+
+func (character *Character) CharacterAbilityScore(abilityName string) int {
+	var score int
+	for _, abilityScore := range character.abilityScores {
+		if abilityScore.name == abilityName {
+			score = abilityScore.abilityScoreModifier
+			break
+		}
+	}
+
+	return score
 }
