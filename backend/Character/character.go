@@ -1,6 +1,7 @@
 package character
 
 import (
+	"backend/utils"
 	"errors"
 	"fmt"
 )
@@ -126,4 +127,20 @@ func (character *Character) CharacterAbilityScore(abilityName string) int {
 	}
 
 	return score
+}
+
+func (character *Character) RollASkill(skillName string) {
+	fmt.Printf("\nRolling %s for %s\n", skillName, character.name)
+	var skillValue int
+	for _, skill := range character.skills {
+		if skill.name == skillName {
+			skillValue = skill.value
+			break
+		}
+	}
+
+	roller := utils.DieRoller(1, 20)
+	rolledValue := roller[0] + skillValue
+	fmt.Printf("\n%s rolled %d on %s skill check", character.name, rolledValue, skillName)
+
 }

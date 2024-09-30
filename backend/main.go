@@ -13,4 +13,6 @@ func main() {
 		Thorgar.PrintCharacterSheet()
 	}
 
+	Thorgar.RollASkill("Intimidation")
+
 }
