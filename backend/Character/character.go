@@ -24,9 +24,10 @@ type Character struct {
 	abilityScores    []AbilityScore `bson:"abilityscores"`
 	savingThrows     []SavingThrow  `bson:"savingthrow"`
 	skills           []Skill        `bson:"skills"`
+	allignment       string         `bson:"allignment"`
 }
 
-func CreateCharacter(name string, strengthscore, dexterityscore, constitutionscore, intelligencescore, wisdomscore, charismascore int) (*Character, error) {
+func CreateCharacter(name, allignment string, strengthscore, dexterityscore, constitutionscore, intelligencescore, wisdomscore, charismascore int) (*Character, error) {
 	var character Character
 	character.name = name
 	character.proficiencybonus = 2
@@ -88,6 +89,18 @@ func CreateCharacter(name string, strengthscore, dexterityscore, constitutionsco
 		character.skills = append(character.skills, skill)
 	}
 
+	validAllignment := []string{"Lawful Good", "Neutral Good", "Chaotic Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral", "Lawful Evil", "Neutral Evil", "Chaotic Evil"}
+	isValidAllignment := false
+	for _, allignmentValid := range validAllignment {
+		if allignmentValid == allignment {
+			isValidAllignment = true
+		}
+	}
+
+	if !isValidAllignment {
+		return nil, errors.New("allignment entered is not valid")
+	}
+
 	return &character, nil
 }
 
@@ -95,6 +108,7 @@ func (character Character) PrintCharacterSheet() {
 	fmt.Println("Character Sheet")
 	fmt.Printf("Name: %s\n", character.name)
 	fmt.Printf("Proficiency Bonus: %v\n", character.proficiencybonus)
+	fmt.Printf("Allignment: %s\n", character.allignment)
 	fmt.Printf("HITDIES \n")
 	for singlehitdie, hitdievalue := range character.hitdie {
 		if hitdievalue > 0 {
@@ -129,18 +143,25 @@ func (character *Character) CharacterAbilityScore(abilityName string) int {
 	return score
 }
 
-func (character *Character) RollASkill(skillName string) {
+func (character *Character) RollASkill(skillName string) error {
 	fmt.Printf("\nRolling %s for %s\n", skillName, character.name)
 	var skillValue int
+	var found bool = false
 	for _, skill := range character.skills {
 		if skill.name == skillName {
 			skillValue = skill.value
+			found = true
 			break
 		}
+	}
+
+	if !found {
+		return errors.New("invalid Skill")
 	}
 
 	roller := utils.DieRoller(1, 20)
 	rolledValue := roller[0] + skillValue
 	fmt.Printf("\n%s rolled %d on %s skill check", character.name, rolledValue, skillName)
+	return nil
 
 }
