@@ -1,0 +1,4 @@
+backend/.env
+backend/certs
+backend/go.mod
+backend/go.sum

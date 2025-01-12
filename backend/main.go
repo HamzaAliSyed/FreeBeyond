@@ -1,23 +1,30 @@
 package main
 
 import (
-	character "backend/Character"
-	"fmt"
 	"log"
+	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	Thorgar, err := character.CreateCharacter("Thorgar Ragehammer", "Lawful Neutral", 18, 15, 18, 10, 12, 14)
-	if err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("Exiting Program")
-		log.Fatal("Invalid Character")
-	} else {
-		Thorgar.PrintCharacterSheet()
+
+	loadEnvironmentError := godotenv.Load()
+	if loadEnvironmentError != nil {
+		log.Fatal("Error loading .env file")
 	}
 
-	skillRollError := Thorgar.RollASkill("Persuasion")
-	if skillRollError != nil {
-		fmt.Println(skillRollError.Error())
+	PORT := os.Getenv("PORT")
+	CERT_PATH := os.Getenv("CERT_PATH")
+	KEY_PATH := os.Getenv("KEY_PATH")
+
+	http.HandleFunc("/", func(response http.ResponseWriter, request *http.Request) {
+		response.Write([]byte("HTTPS Test Page"))
+	})
+
+	httpsError := http.ListenAndServeTLS(":"+PORT, CERT_PATH, KEY_PATH, nil)
+	if httpsError != nil {
+		log.Fatal(httpsError)
 	}
 }
