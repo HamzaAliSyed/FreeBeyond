@@ -5,11 +5,13 @@ import (
 )
 
 type Character struct {
-	Name string
+	Name          string
+	AbilityScores []AbilityScore
 }
 
 type CharacterParameters struct {
-	Name string
+	Name                        string
+	AbilityScoreParametersArray []AbilityScoreParameters
 }
 
 func NewCharacter(parameters CharacterParameters) (*Character, error) {
@@ -18,7 +20,19 @@ func NewCharacter(parameters CharacterParameters) (*Character, error) {
 		return nil, validNameError
 	}
 
+	var abilityScores []AbilityScore
+
+	for _, abilityScoreParameter := range parameters.AbilityScoreParametersArray {
+		abilityScore, abilityScoreCreationError := NewAbilityScore(abilityScoreParameter)
+		if abilityScoreCreationError != nil {
+			return nil, abilityScoreCreationError
+		}
+
+		abilityScores = append(abilityScores, *abilityScore)
+	}
+
 	return &Character{
-		Name: validName,
+		Name:          validName,
+		AbilityScores: abilityScores,
 	}, nil
 }
