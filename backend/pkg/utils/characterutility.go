@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"unicode"
 )
@@ -50,9 +51,16 @@ func capitalizeNameFirstLetters(fullName string) string {
 
 func ValidateScoreAndGenerateModifier(score int) (int, int, error) {
 	if score >= LowerAbilityScoreValue && score <= HigherAbilityScoreValue {
-		modifierValue := (score - 10) / 2
+		modifierValue := modifierGenerator(score)
 		return score, modifierValue, nil
 	} else {
 		return 0, 0, fmt.Errorf("score cannot be more than 18 or less than 1")
 	}
+}
+
+func modifierGenerator(score int) int {
+	floatValue := float64(score)
+	floatValue = (floatValue - 10.0) / 2
+	floatValue = math.Floor(floatValue)
+	return int(floatValue)
 }

@@ -33,4 +33,11 @@ func (characterService CharacterService) DeleteCharacterName(character *models.C
 func (characterService CharacterService) PrintCharacterSheet(character *models.Character) {
 	fmt.Println("Printing Character Sheet")
 	fmt.Printf("Character Name:%s\n", character.Name)
+	fmt.Println("Printing Ability Scores")
+	for _, abilityScore := range character.AbilityScores {
+		fmt.Printf("Ability Score: %s\n", abilityScore.Name)
+		fmt.Printf("Value: %d\n", abilityScore.Score)
+		fmt.Printf("Modifier: %d\n", abilityScore.Modifier)
+		fmt.Println()
+	}
 }
