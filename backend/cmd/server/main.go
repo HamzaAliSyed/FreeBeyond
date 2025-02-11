@@ -16,15 +16,17 @@ func main() {
 			{Name: "Dexterity", Score: 13},
 			{Name: "Constitution", Score: 15},
 			{Name: "Intelligence", Score: 9},
-			{Name: "WIsdom", Score: 14},
+			{Name: "Wisdom", Score: 14},
 			{Name: "Charisma", Score: 12},
 		},
 	}
 	character, characterCreateError := characterService.CreateNewCharacter(characterParameters)
 	if characterCreateError != nil {
-		fmt.Println("Error creating character:", characterCreateError)
+		fmt.Printf("error creating character: %v\n", characterCreateError)
 		return
 	}
+
+	characterService.UpdateAbilityScore(character, "Wisdom", 20)
 
 	characterService.PrintCharacterSheet(character)
 }
