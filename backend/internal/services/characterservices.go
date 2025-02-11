@@ -30,6 +30,24 @@ func (characterService CharacterService) DeleteCharacterName(character *models.C
 	character.Name = "Unnamed Micmansion"
 }
 
+func (characterService CharacterService) UpdateAbilityScore(character *models.Character, abilityName string, newScore int) {
+	for index, ability := range character.AbilityScores {
+		if ability.Name == abilityName {
+			newScore, newModifierValue, updateError := utils.ValidateScoreAndGenerateModifier(newScore)
+			if updateError != nil {
+				fmt.Printf("encounter error in updating character: %v\n", updateError)
+			}
+
+			ability.Score = newScore
+			ability.Modifier = newModifierValue
+
+			character.AbilityScores[index] = ability
+
+			fmt.Printf("THe new character ability %s have the score %d and modifier %d", ability.Name, ability.Score, ability.Modifier)
+		}
+	}
+}
+
 func (characterService CharacterService) PrintCharacterSheet(character *models.Character) {
 	fmt.Println("Printing Character Sheet")
 	fmt.Printf("Character Name:%s\n", character.Name)

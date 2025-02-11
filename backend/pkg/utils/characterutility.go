@@ -9,7 +9,8 @@ import (
 
 const MaxCharacterNameLength = 30
 const LowerAbilityScoreValue = 1
-const HigherAbilityScoreValue = 18
+const HigherAbilityScoreValue = 30
+const NewCharacterHigherAbilityScoreValue = 18
 
 func ValidateName(name string) (string, error) {
 	trimmedName := strings.TrimSpace(name)
@@ -47,6 +48,15 @@ func capitalizeNameFirstLetters(fullName string) string {
 	}
 
 	return strings.Join(names, " ")
+}
+
+func NewCharacterValidateScoreAndGenerateModifier(score int) (int, int, error) {
+	if score >= LowerAbilityScoreValue && score <= NewCharacterHigherAbilityScoreValue {
+		modifierValue := modifierGenerator(score)
+		return score, modifierValue, nil
+	} else {
+		return 0, 0, fmt.Errorf("score cannot be more than 18 or less than 1")
+	}
 }
 
 func ValidateScoreAndGenerateModifier(score int) (int, int, error) {
