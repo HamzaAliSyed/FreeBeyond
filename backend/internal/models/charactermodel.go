@@ -2,37 +2,39 @@ package models
 
 import (
 	"backend/pkg/utils"
+	"fmt"
 )
 
 type Character struct {
 	Name          string
-	AbilityScores []AbilityScore
+	AbilityScores map[string]interface{}
 }
 
 type CharacterParameters struct {
-	Name                        string
-	AbilityScoreParametersArray []AbilityScoreParameters
+	Name                         string
+	AbilityScoresParametersArray []AbilityScoreParameters
 }
 
-func NewCharacter(parameters CharacterParameters) (*Character, error) {
+func NewCharacter(parameters CharacterParameters) (Character, error) {
 	validName, validNameError := utils.ValidateName(parameters.Name)
+	var character Character
 	if validNameError != nil {
-		return nil, validNameError
+		return character, validNameError
 	}
 
-	var abilityScores []AbilityScore
-
-	for _, abilityScoreParameter := range parameters.AbilityScoreParametersArray {
-		abilityScore, abilityScoreCreationError := NewAbilityScore(abilityScoreParameter)
-		if abilityScoreCreationError != nil {
-			return nil, abilityScoreCreationError
+	for _, abilityScore := range parameters.AbilityScoresParametersArray {
+		var characterAbility AbilityScore
+		asi, asm, abilityScoreUpdateError := utils.NewCharacterValidateScoreAndGenerateModifier(abilityScore.Score)
+		if abilityScoreUpdateError != nil {
+			fmt.Printf("cannot create attribute score %v", abilityScoreUpdateError)
+			return character, abilityScoreUpdateError
 		}
 
-		abilityScores = append(abilityScores, *abilityScore)
+		characterAbility.Name = abilityScore.Name
+		characterAbility.Score = asi
+		characterAbility.Modifier = asm
+		character.AbilityScores[abilityScore.Name] = characterAbility
 	}
-
-	return &Character{
-		Name:          validName,
-		AbilityScores: abilityScores,
-	}, nil
+	character.Name = validName
+	return character, nil
 }
