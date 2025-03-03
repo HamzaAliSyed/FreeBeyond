@@ -30,10 +30,6 @@ func (characterService CharacterService) DeleteCharacterName(character *models.C
 	character.Name = "Unnamed Micmansion"
 }
 
-func (characterService CharacterService) UpdateAbilityScore(character *models.Character, abilityName string, newScore int) {
-
-}
-
 func (characterService CharacterService) PrintCharacterSheet(character models.Character) {
 	fmt.Println("Printing Character Sheet")
 	fmt.Printf("Character Name:%s\n", character.Name)
@@ -49,4 +45,54 @@ func (characterService CharacterService) PrintCharacterSheet(character models.Ch
 			fmt.Println("Cannot generate Ability Score Adequately")
 		}
 	}
+}
+
+func (characterService CharacterService) UpdateAbilityScore(character *models.Character, abilityName string, newScore int) error {
+	abilityScore, exists := character.AbilityScores[abilityName]
+	if !exists {
+		return fmt.Errorf("ability name %s does not exist", abilityName)
+	}
+
+	abilityScoreStruct, ok := abilityScore.(models.AbilityScore)
+	if !ok {
+		return fmt.Errorf("cannot parse the ability score struct")
+	}
+
+	score, modifier, updateError := utils.ValidateScoreAndGenerateModifier(newScore)
+	if updateError != nil {
+		return fmt.Errorf("error updating %v", updateError)
+	}
+
+	abilityScoreStruct.Score = score
+	abilityScoreStruct.Modifier = modifier
+
+	character.AbilityScores[abilityName] = abilityScoreStruct
+
+	return nil
+}
+
+func (characterService CharacterService) IncreaseAbilityScore(character *models.Character, abilityName string, increaseAmount int) error {
+	abilityScore, exists := character.AbilityScores[abilityName]
+	if !exists {
+		return fmt.Errorf("ability name %s does not exist", abilityName)
+	}
+
+	abilityScoreStruct, ok := abilityScore.(models.AbilityScore)
+	if !ok {
+		return fmt.Errorf("cannot parse the ability score struct")
+	}
+
+	newScore := abilityScoreStruct.Score + increaseAmount
+
+	score, modifier, updateError := utils.ValidateScoreAndGenerateModifier(newScore)
+	if updateError != nil {
+		return fmt.Errorf("error updating %v", updateError)
+	}
+
+	abilityScoreStruct.Score = score
+	abilityScoreStruct.Modifier = modifier
+
+	character.AbilityScores[abilityName] = abilityScoreStruct
+
+	return nil
 }
