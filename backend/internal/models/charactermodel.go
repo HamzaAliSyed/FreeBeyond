@@ -18,6 +18,7 @@ type CharacterParameters struct {
 func NewCharacter(parameters CharacterParameters) (Character, error) {
 	validName, validNameError := utils.ValidateName(parameters.Name)
 	var character Character
+	character.AbilityScores = make(map[string]interface{})
 	if validNameError != nil {
 		return character, validNameError
 	}

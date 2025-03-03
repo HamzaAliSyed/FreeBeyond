@@ -38,5 +38,15 @@ func (characterService CharacterService) PrintCharacterSheet(character models.Ch
 	fmt.Println("Printing Character Sheet")
 	fmt.Printf("Character Name:%s\n", character.Name)
 	fmt.Println("Printing Ability Scores")
-
+	for abilityName, abilityScore := range character.AbilityScores {
+		fmt.Println("****************")
+		fmt.Println(abilityName)
+		scoreStruct, ok := abilityScore.(models.AbilityScore)
+		if ok {
+			fmt.Println("Score: ", scoreStruct.Score)
+			fmt.Println("Modifier: ", scoreStruct.Modifier)
+		} else {
+			fmt.Println("Cannot generate Ability Score Adequately")
+		}
+	}
 }
