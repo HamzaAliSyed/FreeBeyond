@@ -8,6 +8,7 @@ import (
 type Character struct {
 	Name          string
 	AbilityScores map[string]interface{}
+	Attacks       []Attack
 }
 
 type CharacterParameters struct {
