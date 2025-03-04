@@ -45,6 +45,7 @@ func (characterService CharacterService) PrintCharacterSheet(character models.Ch
 			fmt.Println("Cannot generate Ability Score Adequately")
 		}
 	}
+	fmt.Println("****************")
 	if len(character.Attacks) != 0 {
 		for _, attack := range character.Attacks {
 			attack.Print()
@@ -102,4 +103,30 @@ func (characterService CharacterService) IncreaseAbilityScore(character *models.
 	character.AbilityScores[abilityName] = abilityScoreStruct
 
 	return nil
+}
+
+func (characterService CharacterService) AddAttackToCharacter(character *models.Character, attackParameters models.AttackParameters) error {
+	switch attackParameters.Type {
+	case "ACBeatingAttack":
+		{
+			newAttack, newAttackGenerationError := models.GenerateACBeatingAttackForCharacter(character, attackParameters)
+			if newAttackGenerationError != nil {
+				return fmt.Errorf("encountered error in generating new Attack: %v", newAttackGenerationError)
+			}
+			character.Attacks = append(character.Attacks, newAttack)
+		}
+	default:
+		return fmt.Errorf("invalid attack type")
+	}
+	return nil
+}
+
+func (characterService CharacterService) RemoveAttackFromCharacter(character *models.Character, name string) error {
+	for index, attack := range character.Attacks {
+		if attack.Name() == name {
+			character.Attacks = append(character.Attacks[:index], character.Attacks[index+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("attack with name %s not found", name)
 }

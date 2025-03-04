@@ -48,16 +48,26 @@ func main() {
 	longSwordAttackParameters := models.AttackParameters{
 		Name:               "LongSword",
 		MainAbility:        "Dexterity",
+		Type:               "ACBeatingAttack",
 		NumberOfDie:        []int{1},
 		ArrayOfDamageTypes: []string{"Slashing"},
 		ArrayOfHitDies:     []string{"d8"},
 	}
 
-	longSwordAttack, longSwordAttackError := models.GenerateACBeatingAttackForCharacter(&character, longSwordAttackParameters)
-	if longSwordAttackError != nil {
-		fmt.Printf("Couldnt create the longsword attack %s", longSwordAttackError)
+	fmt.Printf("Now giving our protagonist %s the Long Sword", character.Name)
+	newAttackError := characterService.AddAttackToCharacter(&character, longSwordAttackParameters)
+	if newAttackError != nil {
+		fmt.Printf("Coundlnt create the attack: %v", newAttackError)
 	} else {
-		character.Attacks = append(character.Attacks, longSwordAttack)
 		characterService.PrintCharacterSheet(character)
 	}
+
+	fmt.Printf("Now our protagonist %s dropped their Long Sword", character.Name)
+	attackRemoveError := characterService.RemoveAttackFromCharacter(&character, "LongSword")
+	if attackRemoveError != nil {
+		fmt.Printf("Couldn't remove the attack: %v", attackRemoveError)
+	} else {
+		characterService.PrintCharacterSheet(character)
+	}
+
 }

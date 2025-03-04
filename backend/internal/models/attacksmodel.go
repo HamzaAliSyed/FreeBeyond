@@ -29,6 +29,7 @@ func (acBeatingAttack ACBeatingAttack) Print() {
 
 type AttackParameters struct {
 	Name               string
+	Type               string
 	MainAbility        string
 	Traits             []string
 	NumberOfDie        []int
