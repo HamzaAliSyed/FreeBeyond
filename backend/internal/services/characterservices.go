@@ -45,6 +45,13 @@ func (characterService CharacterService) PrintCharacterSheet(character models.Ch
 			fmt.Println("Cannot generate Ability Score Adequately")
 		}
 	}
+	if len(character.Attacks) != 0 {
+		for _, attack := range character.Attacks {
+			attack.Print()
+		}
+	} else {
+		fmt.Println("This character has no attacks")
+	}
 }
 
 func (characterService CharacterService) UpdateAbilityScore(character *models.Character, abilityName string, newScore int) error {

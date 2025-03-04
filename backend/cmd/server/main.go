@@ -45,4 +45,19 @@ func main() {
 
 	characterService.PrintCharacterSheet(character)
 
+	longSwordAttackParameters := models.AttackParameters{
+		Name:               "LongSword",
+		MainAbility:        "Dexterity",
+		NumberOfDie:        []int{1},
+		ArrayOfDamageTypes: []string{"Slashing"},
+		ArrayOfHitDies:     []string{"d8"},
+	}
+
+	longSwordAttack, longSwordAttackError := models.GenerateACBeatingAttackForCharacter(&character, longSwordAttackParameters)
+	if longSwordAttackError != nil {
+		fmt.Printf("Couldnt create the longsword attack %s", longSwordAttackError)
+	} else {
+		character.Attacks = append(character.Attacks, longSwordAttack)
+		characterService.PrintCharacterSheet(character)
+	}
 }
