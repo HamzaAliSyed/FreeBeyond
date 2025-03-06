@@ -70,8 +70,22 @@ func (characterService CharacterService) PrintCharacterSheet(character models.Ch
 	fmt.Println("Skills")
 	fmt.Println("****************")
 	for _, standingSkill := range character.Skills {
-		for attributename, _ := range standingSkill {
+		fmt.Println("****************")
+		for attributename, skillsOfAttribute := range standingSkill {
+			fmt.Println("****************")
 			fmt.Println("For the Attributes: ", attributename)
+			fmt.Println("****************")
+			for _, skill := range skillsOfAttribute {
+				fmt.Println("****************")
+				for skillName, skillStruct := range skill {
+					fmt.Println("****************")
+					skillStructHarvested := skillStruct.(models.Skill)
+					fmt.Println("Skill Name: ", skillName)
+					skillStructHarvested.Print()
+					fmt.Println("****************")
+				}
+				fmt.Println("****************")
+			}
 		}
 	}
 	fmt.Println("****************")

@@ -84,14 +84,14 @@ func (savingThrow SavingThrow) Print() {
 	fmt.Println("Total: ", savingThrow.total)
 }
 
-func GenerateSkillsForTheFirstTime(abilityScore AbilityScore) Skill {
+func generateNewSkillStructForTheFirstTime(modifier int) Skill {
 	var newSkill Skill
 	newSkill.hasAdvantage = false
 	newSkill.hasDisadvantage = false
 	newSkill.proficiencyBonus = 0
 	newSkill.otherbonus = 0
-	newSkill.modifier = abilityScore.abilityScoreModifier
-	newSkill.total = abilityScore.abilityScoreModifier
+	newSkill.modifier = modifier
+	newSkill.total = modifier
 	return newSkill
 }
 
@@ -113,4 +113,20 @@ func (skill Skill) Print() {
 
 	fmt.Println("Modifier: ", skill.modifier)
 	fmt.Println("Total: ", skill.total)
+}
+
+func generateSkillMapPair(skillName string, modifier int) map[string]interface{} {
+	newSkill := make(map[string]interface{})
+	newSkill[skillName] = generateNewSkillStructForTheFirstTime(modifier)
+	return newSkill
+}
+
+func generateArrayOfSkillMapPair(skillNames []string, modifier int) []map[string]interface{} {
+	skillsArray := make([]map[string]interface{}, 0)
+	for _, skillName := range skillNames {
+		skillMapPair := generateSkillMapPair(skillName, modifier)
+		skillsArray = append(skillsArray, skillMapPair)
+	}
+
+	return skillsArray
 }

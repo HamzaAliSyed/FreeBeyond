@@ -10,7 +10,7 @@ type Character struct {
 	ProficiencyBonus int
 	AbilityScores    []map[string]interface{}
 	SavingThrows     []map[string]interface{}
-	Skills           []map[string][]interface{}
+	Skills           []map[string][]map[string]interface{}
 }
 
 type CharacterParameters struct {
@@ -44,8 +44,10 @@ func NewCharacter(parameters CharacterParameters) (*Character, error) {
 		"Wisdom":       {"Animal Handling", "Insight", "Medicine", "Perception", "Survival"},
 		"Charisma":     {"Deception", "Intimidation", "Performance", "Persuasion"},
 	}
+
 	character.AbilityScores = make([]map[string]interface{}, len(abilityScoreNames))
 	character.SavingThrows = make([]map[string]interface{}, len(abilityScoreNames))
+	character.Skills = make([]map[string][]map[string]interface{}, len(abilityScoreNames))
 	for index, abilityScoreName := range abilityScoreNames {
 		character.AbilityScores[index] = make(map[string]interface{})
 		abilityScoreStruct, abilityScoreStructGenerationError := GenerateAbilityScoreStruct(true, parameters.AbilityScores[index])
@@ -56,20 +58,11 @@ func NewCharacter(parameters CharacterParameters) (*Character, error) {
 		character.SavingThrows[index] = make(map[string]interface{})
 		savingThrow := GenerateSavingThrowForFirstTime(abilityScoreStruct)
 		character.SavingThrows[index][abilityScoreName] = savingThrow
-	}
-
-	character.Skills = make([]map[string][]interface{}, 0)
-	for index, abilityScoreName := range abilityScoreNames {
-		abilityScoreStruct := character.AbilityScores[index][abilityScoreName].(AbilityScore)
 		skills := skillDependecies[abilityScoreName]
-		if len(skills) > 0 {
-			skillMap := make(map[string][]interface{})
-			for _, skillName := range skills {
-				newSkill := GenerateSkillsForTheFirstTime(abilityScoreStruct)
-				skillMap[skillName] = []interface{}{newSkill}
-			}
-			character.Skills = append(character.Skills, skillMap)
-		}
+		arrayOfAttributeSkills := generateArrayOfSkillMapPair(skills, abilityScoreStruct.abilityScoreModifier)
+		attributeToSkillsMap := make(map[string][]map[string]interface{})
+		attributeToSkillsMap[abilityScoreName] = arrayOfAttributeSkills
+		character.Skills = append(character.Skills, attributeToSkillsMap)
 	}
 
 	return &character, nil
