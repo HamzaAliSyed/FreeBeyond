@@ -83,3 +83,34 @@ func (savingThrow SavingThrow) Print() {
 	fmt.Println("Modifier: ", savingThrow.modifier)
 	fmt.Println("Total: ", savingThrow.total)
 }
+
+func GenerateSkillsForTheFirstTime(abilityScore AbilityScore) Skill {
+	var newSkill Skill
+	newSkill.hasAdvantage = false
+	newSkill.hasDisadvantage = false
+	newSkill.proficiencyBonus = 0
+	newSkill.otherbonus = 0
+	newSkill.modifier = abilityScore.abilityScoreModifier
+	newSkill.total = abilityScore.abilityScoreModifier
+	return newSkill
+}
+
+func (skill Skill) Print() {
+	fmt.Println("Proficiency Bonus: ", skill.proficiencyBonus)
+	fmt.Println("Other Bonus: ", skill.otherbonus)
+
+	if skill.hasAdvantage {
+		fmt.Println("Has Advantage: Yes")
+	} else {
+		fmt.Println("Has Advantage: No")
+	}
+
+	if skill.hasDisadvantage {
+		fmt.Println("Has Disadvantage: Yes")
+	} else {
+		fmt.Println("Has Disadvantage: No")
+	}
+
+	fmt.Println("Modifier: ", skill.modifier)
+	fmt.Println("Total: ", skill.total)
+}
