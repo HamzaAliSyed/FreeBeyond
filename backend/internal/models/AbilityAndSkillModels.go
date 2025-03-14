@@ -1,73 +1,55 @@
 package models
 
-import (
-	"backend/pkg/utils"
-	"fmt"
-)
+import "fmt"
 
 type AbilityScore struct {
-	abilityScoreValue    int
-	abilityScoreModifier int
+	value    int
+	modifier int
 }
 
-type SavingThrow struct {
-	proficiencyBonus float64
-	modifier         int
-	otherbonus       int
-	hasAdvantage     bool
-	hasDisadvantage  bool
-	total            int
+func (abilityScore AbilityScore) GetValue() int {
+	return abilityScore.value
 }
 
-type Skill struct {
-	proficiencyBonus float64
-	modifier         int
-	otherbonus       int
-	hasAdvantage     bool
-	hasDisadvantage  bool
-	total            int
-}
-
-func GenerateAbilityScoreStruct(isNew bool, score int) (AbilityScore, error) {
-	var newAbilityScore AbilityScore
-	var HigherConstant int
-	if isNew {
-		HigherConstant = 18
-	} else {
-		HigherConstant = 30
-	}
-
-	if score > HigherConstant || score <= 1 {
-		return newAbilityScore, fmt.Errorf("cannot generate the ability score because of invalid score value")
-	}
-
-	modifierValue := utils.ModifierGenerator(score)
-	newAbilityScore.abilityScoreValue = score
-	newAbilityScore.abilityScoreModifier = modifierValue
-	return newAbilityScore, nil
+func (abilityScore AbilityScore) GetModifier() int {
+	return abilityScore.modifier
 }
 
 func (abilityScore AbilityScore) Print() {
-	fmt.Println("Score: ", abilityScore.abilityScoreValue)
-	fmt.Println("Modifier: ", abilityScore.abilityScoreModifier)
+	fmt.Println("Value: ", abilityScore.value)
+	fmt.Println("Modifier: ", abilityScore.modifier)
 }
 
-func GenerateSavingThrowForFirstTime(abilityScore AbilityScore) SavingThrow {
+type SavingThrow struct {
+	numberOfProficiencies float64
+	hasAdvantage          bool
+	hasDisadvantage       bool
+	otherBonus            int
+	proficiencyBonus      *int
+	modifier              *int
+}
+
+func GenerateSavingThrow(savingThrowName string, character Character) SavingThrow {
 	var savingThrow SavingThrow
+
+	savingThrow.numberOfProficiencies = 0
 	savingThrow.hasAdvantage = false
 	savingThrow.hasDisadvantage = false
-	savingThrow.proficiencyBonus = 0
-	savingThrow.otherbonus = 0
-	savingThrow.modifier = abilityScore.abilityScoreModifier
-	savingThrow.total = abilityScore.abilityScoreModifier
+	savingThrow.otherBonus = 0
+	savingThrow.proficiencyBonus = &character.proficiencyBonus
+	savingThrow.modifier = &character.abilityScores[savingThrowName].modifier
 
 	return savingThrow
 }
 
-func (savingThrow SavingThrow) Print() {
-	fmt.Println("Proficiency Bonus: ", savingThrow.proficiencyBonus)
-	fmt.Println("Other Bonus: ", savingThrow.otherbonus)
+func (savingThrow SavingThrow) TotalRoll() int {
+	var total int
+	scoreFromProficieny := int(savingThrow.numberOfProficiencies * float64(*savingThrow.proficiencyBonus))
+	total = scoreFromProficieny + *savingThrow.modifier + savingThrow.otherBonus
+	return total
+}
 
+func (savingThrow SavingThrow) Print() {
 	if savingThrow.hasAdvantage {
 		fmt.Println("Has Advantage: Yes")
 	} else {
@@ -80,53 +62,6 @@ func (savingThrow SavingThrow) Print() {
 		fmt.Println("Has Disadvantage: No")
 	}
 
-	fmt.Println("Modifier: ", savingThrow.modifier)
-	fmt.Println("Total: ", savingThrow.total)
-}
+	fmt.Println("Total: ", savingThrow.TotalRoll())
 
-func generateNewSkillStructForTheFirstTime(modifier int) Skill {
-	var newSkill Skill
-	newSkill.hasAdvantage = false
-	newSkill.hasDisadvantage = false
-	newSkill.proficiencyBonus = 0
-	newSkill.otherbonus = 0
-	newSkill.modifier = modifier
-	newSkill.total = modifier
-	return newSkill
-}
-
-func (skill Skill) Print() {
-	fmt.Println("Proficiency Bonus: ", skill.proficiencyBonus)
-	fmt.Println("Other Bonus: ", skill.otherbonus)
-
-	if skill.hasAdvantage {
-		fmt.Println("Has Advantage: Yes")
-	} else {
-		fmt.Println("Has Advantage: No")
-	}
-
-	if skill.hasDisadvantage {
-		fmt.Println("Has Disadvantage: Yes")
-	} else {
-		fmt.Println("Has Disadvantage: No")
-	}
-
-	fmt.Println("Modifier: ", skill.modifier)
-	fmt.Println("Total: ", skill.total)
-}
-
-func generateSkillMapPair(skillName string, modifier int) map[string]interface{} {
-	newSkill := make(map[string]interface{})
-	newSkill[skillName] = generateNewSkillStructForTheFirstTime(modifier)
-	return newSkill
-}
-
-func generateArrayOfSkillMapPair(skillNames []string, modifier int) []map[string]interface{} {
-	skillsArray := make([]map[string]interface{}, 0)
-	for _, skillName := range skillNames {
-		skillMapPair := generateSkillMapPair(skillName, modifier)
-		skillsArray = append(skillsArray, skillMapPair)
-	}
-
-	return skillsArray
 }

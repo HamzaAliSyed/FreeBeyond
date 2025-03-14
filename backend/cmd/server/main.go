@@ -7,16 +7,23 @@ import (
 )
 
 func main() {
-	characterService := services.NewCharacterService()
-	characterParameters := models.CharacterParameters{
+	characterService := services.CharacterService{}
+
+	newCharacterParameters := models.CharacterParameters{
 		Name:          "Absol Curry",
 		AbilityScores: []int{18, 18, 18, 18, 18, 18},
 	}
 
-	character, characterCreationError := characterService.CreateNewCharacter(characterParameters)
+	character, characterCreationError := characterService.GenerateNewCharacter(newCharacterParameters)
 	if characterCreationError != nil {
-		fmt.Printf("Cannot create the character %v", characterCreationError)
+		fmt.Printf("Error: Cannot create new character: %v", characterCreationError)
+		return
 	}
 
+	characterService.PrintCharacterSheet(character)
+
+	fmt.Println("Absol goes into a library and study tirelessly for 72 hours")
+
+	characterService.ImproveAbilityScore("Intelligence", 5, *character)
 	characterService.PrintCharacterSheet(character)
 }
