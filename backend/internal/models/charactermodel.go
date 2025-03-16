@@ -10,6 +10,7 @@ type Character struct {
 	proficiencyBonus int
 	abilityScores    map[string]*AbilityScore
 	savingThrows     map[string]*SavingThrow
+	skills           map[string]*Skill
 }
 
 type CharacterParameters struct {
@@ -34,6 +35,7 @@ func CreateNewCharacter(parameters CharacterParameters) (*Character, error) {
 	var character Character
 	character.abilityScores = make(map[string]*AbilityScore)
 	character.savingThrows = make(map[string]*SavingThrow)
+	character.skills = make(map[string]*Skill)
 	character.name = validName
 	character.proficiencyBonus = 2
 
@@ -47,6 +49,22 @@ func CreateNewCharacter(parameters CharacterParameters) (*Character, error) {
 		character.abilityScores[mainAbilityName] = abilityStruct
 		savingThrowStruct := GenerateSavingThrow(mainAbilityName, character)
 		character.savingThrows[mainAbilityName] = &savingThrowStruct
+	}
+
+	mainSkillToAttribute := map[string][]string{
+		"Strength":     {"Athletics"},
+		"Dexterity":    {"Acrobatics", "Sleight of Hand", "Stealth"},
+		"Constitution": {},
+		"Intelligence": {"Arcana", "History", "Investigation", "Nature", "Religion"},
+		"Wisdom":       {"Animal Handling", "Insight", "Medicine", "Perception", "Survival"},
+		"Charisma":     {"Deception", "Intimidation", "Performance", "Persuasion"},
+	}
+
+	for ability, skills := range mainSkillToAttribute {
+		for _, skillName := range skills {
+			skillStruct := GenerateSkill(ability, character)
+			character.skills[skillName] = &skillStruct
+		}
 	}
 
 	return &character, nil
@@ -79,6 +97,14 @@ func (character Character) PrintSavingThrows() {
 	for name, savingThrow := range character.savingThrows {
 		fmt.Println("Saving Throw: ", name)
 		savingThrow.Print()
+	}
+}
+
+func (character Character) PrintSkills() {
+	fmt.Println("Skills")
+	for name, skill := range character.skills {
+		fmt.Println("Skill Name: ", name)
+		skill.Print()
 	}
 }
 

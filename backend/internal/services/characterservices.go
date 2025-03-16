@@ -25,6 +25,8 @@ func (characterService CharacterService) PrintCharacterSheet(character *models.C
 	fmt.Println("**********")
 	character.PrintSavingThrows()
 	fmt.Println("**********")
+	character.PrintSkills()
+	fmt.Println("**********")
 }
 
 func (characterService CharacterService) ImproveAbilityScore(abilityName string, increase int, character models.Character) {

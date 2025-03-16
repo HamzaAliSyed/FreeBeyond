@@ -65,3 +65,46 @@ func (savingThrow SavingThrow) Print() {
 	fmt.Println("Total: ", savingThrow.TotalRoll())
 
 }
+
+type Skill struct {
+	numberOfProficiencies float64
+	hasAdvantage          bool
+	hasDisadvantage       bool
+	otherBonus            int
+	proficiencyBonus      *int
+	modifier              *int
+}
+
+func GenerateSkill(abilityScoreName string, character Character) Skill {
+	var skill Skill
+	skill.hasAdvantage = false
+	skill.hasDisadvantage = false
+	skill.otherBonus = 0
+	skill.numberOfProficiencies = 0
+	skill.proficiencyBonus = &character.proficiencyBonus
+	skill.modifier = &character.abilityScores[abilityScoreName].modifier
+
+	return skill
+}
+
+func (skill Skill) TotalRoll() int {
+	var total int
+	scoreFromProficieny := int(skill.numberOfProficiencies * float64(*skill.proficiencyBonus))
+	total = scoreFromProficieny + *skill.modifier + skill.otherBonus
+	return total
+}
+func (skill Skill) Print() {
+	if skill.hasAdvantage {
+		fmt.Println("Has Advantage: Yes")
+	} else {
+		fmt.Println("Has Advantage: No")
+	}
+
+	if skill.hasDisadvantage {
+		fmt.Println("Has Disadvantage: Yes")
+	} else {
+		fmt.Println("Has Disadvantage: No")
+	}
+
+	fmt.Println("Total: ", skill.TotalRoll())
+}
