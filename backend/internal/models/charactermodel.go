@@ -7,6 +7,7 @@ import (
 
 type Character struct {
 	name             string
+	ac               AC
 	proficiencyBonus int
 	abilityScores    map[string]*AbilityScore
 	savingThrows     map[string]*SavingThrow
@@ -67,6 +68,10 @@ func CreateNewCharacter(parameters CharacterParameters) (*Character, error) {
 		}
 	}
 
+	var ac AC
+	ac.CalculateAC(character.abilityScores["Dexterity"].modifier)
+	character.ac = ac
+
 	return &character, nil
 
 }
@@ -114,4 +119,8 @@ func (character Character) IncreaseAbilityScore(ability string, value int) {
 	newMod := utils.ModifierGenerator(newValue)
 	character.abilityScores[ability].value = newValue
 	character.abilityScores[ability].modifier = newMod
+}
+
+func (character Character) GetAC() int {
+	return character.ac.finalValue
 }

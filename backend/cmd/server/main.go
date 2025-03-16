@@ -23,7 +23,9 @@ func main() {
 	characterService.PrintCharacterSheet(character)
 
 	fmt.Println("Absol goes into a library and study tirelessly for 72 hours")
+	fmt.Println("And he goes to cardio and stretching a little bit")
 
 	characterService.ImproveAbilityScore("Intelligence", 5, *character)
+	characterService.ImproveAbilityScore("Dexterity", 10, *character)
 	characterService.PrintCharacterSheet(character)
 }
